@@ -19,6 +19,15 @@ body.eg-body {
   background: radial-gradient(circle at top, #101532 0, #050712 50%, #020308 100%);
   color: #f5f7ff;
 }
+.eg-image-link {
+  display: block;
+  text-decoration: none;
+}
+
+.eg-image-link:hover .eg-img-full {
+  transform: translateY(-2px);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9);
+}
 
 /* =========================
    VARIABLES

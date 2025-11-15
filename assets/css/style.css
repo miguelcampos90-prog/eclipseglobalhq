@@ -1,1 +1,15 @@
 
+:root {
+  --eg-bg: #050712;
+  --eg-bg-alt: #0b0f21;
+  --eg-surface: #111626;
+  --eg-border-subtle: rgba(255, 255, 255, 0.05);
+
+  --eg-text: #f5f7ff;
+  --eg-text-soft: #a2a8c3;
+
+  --eg-accent: #2dd7ff;   /* signal blue */
+  --eg-accent-soft: #175b7a;
+  --eg-signal-green: #32f68f;
+  --eg-alert-amber: #ffc857;
+}

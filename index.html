@@ -1,243 +1,417 @@
-/* RESET */
-*, *::before, *::after { box-sizing: border-box; }
-body, html { margin: 0; padding: 0; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>Eclipse Global HQ – Central Command</title>
 
-/* BODY */
-body.eg-body {
-  font-family: system-ui, sans-serif;
-  background: radial-gradient(circle at top, #101532 0, #050712 50%, #020308 100%);
-  color: #f5f7ff;
-}
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/style.css" />
 
-/* VARIABLES */
-:root {
-  --eg-text: #f5f7ff;
-  --eg-text-soft: #a2a8c3;
-  --eg-text-dim: #707696;
-  --eg-accent: #2dd7ff;
-  --eg-signal-green: #32f68f;
-  --eg-border-subtle: rgba(255, 255, 255, 0.05);
-}
+  <!-- Scripts -->
+  <script src="assets/js/main.js" defer></script>
+</head>
 
-/* LAYOUT */
-.eg-container {
-  width: min(1120px, 100% - 2rem);
-  margin: auto;
-}
+<body class="eg-body">
+  <!-- =========================
+       HEADER / NAV
+  ========================== -->
+  <header class="eg-header">
+    <div class="eg-container eg-header-inner">
+      <div class="eg-logo">
+        <div class="eg-logo-mark">EG</div>
+        <div class="eg-logo-copy">
+          <span class="eg-logo-text">ECLIPSE GLOBAL HQ</span>
+          <span class="eg-tagline">BRAIN • SIGNAL • INFRASTRUCTURE</span>
+        </div>
+      </div>
 
-/* HEADER */
-.eg-header {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  backdrop-filter: blur(14px);
-  background: rgba(5, 7, 18, 0.9);
-}
-.eg-header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-}
-.eg-logo {
-  display: flex;
-  gap: .5rem;
-  align-items: center;
-}
-.eg-logo-mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 20%, #79ffff, #087aad 55%, #020410 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+      <!-- Desktop nav -->
+      <nav class="eg-nav" data-eg-nav>
+        <a href="#core" class="eg-nav-link">HQ Core</a>
+        <a href="#divisions" class="eg-nav-link">Eclipse Divisions</a>
+        <a href="#console" class="eg-nav-link">Command Console</a>
+        <a href="#contact" class="eg-nav-link">Contact</a>
+      </nav>
 
-.eg-nav {
-  display: flex;
-  gap: 1.5rem;
-}
+      <!-- Mobile toggle -->
+      <button
+        class="eg-nav-toggle"
+        type="button"
+        aria-label="Toggle navigation"
+        aria-expanded="false"
+        data-eg-nav-toggle
+      >
+        <span class="eg-nav-toggle-line"></span>
+        <span class="eg-nav-toggle-line"></span>
+      </button>
+    </div>
+  </header>
 
-.eg-nav-toggle {
-  display: none;
-}
+  <!-- =========================
+       MAIN SHELL
+  ========================== -->
+  <main class="eg-shell">
+    <div class="eg-container">
 
-@media (max-width: 840px) {
-  .eg-nav-toggle {
-    display: block;
-    cursor: pointer;
-  }
-  .eg-nav {
-    position: absolute;
-    top: 56px;
-    right: 1rem;
-    left: 1rem;
-    background: rgba(5, 7, 18, 0.95);
-    border: 1px solid var(--eg-border-subtle);
-    border-radius: 14px;
-    padding: 1rem;
-    flex-direction: column;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-10px);
-    transition: .2s;
-  }
-  .eg-nav.eg-nav--open {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-  }
-}
+      <!-- =====================
+           HERO – HQ CONSOLE
+      ====================== -->
+      <section id="core" class="eg-hero">
+        <div class="eg-hero-signal">
+          <span class="eg-hero-signal-dot"></span>
+          <span>LIVE SIGNAL</span>
+          <span class="eg-separator">•</span>
+          <span>CENTRAL COMMAND ONLINE</span>
+        </div>
 
-/* MAIN SHELL */
-.eg-shell {
-  padding: 3rem 0;
-}
+        <div class="eg-hero-grid">
+          <!-- Left: Copy -->
+          <div class="eg-hero-copy">
+            <p class="eg-eyebrow">ECLIPSE GLOBAL HQ</p>
+            <h1 class="eg-hero-title">
+              Eclipse at the center.<br />
+              Every node in sync.<br />
+              Command you can feel.
+            </h1>
 
-/* HERO */
-.eg-hero {
-  background: radial-gradient(circle at top left, #1a2850, #050815 45%, #04040c 100%);
-  padding: 2rem;
-  border-radius: 24px;
-  border: 1px solid var(--eg-border-subtle);
-}
-.eg-hero-signal {
-  display: flex;
-  gap: .5rem;
-  font-size: .7rem;
-  text-transform: uppercase;
-}
-.eg-hero-signal-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--eg-signal-green);
-}
-.eg-hero-grid {
-  display: grid;
-  grid-template-columns: 2fr 1.2fr;
-  gap: 2rem;
-}
+            <p class="eg-hero-body">
+              Eclipse Global HQ is the command core for every Eclipse-connected company.
+              This is where intelligence, coordination, and digital infrastructure unify
+              to keep every node aligned — Transport, Properties, Interstate, Stateline,
+              and all future divisions.
+            </p>
 
-@media (max-width: 840px) {
-  .eg-hero-grid {
-    grid-template-columns: 1fr;
-  }
-}
+            <div class="eg-hero-tags">
+              <span class="eg-pill">No chaos freight</span>
+              <span class="eg-pill">Signal over noise</span>
+              <span class="eg-pill">Human-first routing</span>
+            </div>
 
-/* SNAPSHOT */
-.eg-console {
-  background: rgba(10, 15, 34, 0.9);
-  border: 1px solid var(--eg-border-subtle);
-  padding: 1.25rem;
-  border-radius: 20px;
-}
-.eg-console-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: .75rem;
-}
-.eg-console-card {
-  background: #0a0e1c;
-  padding: .75rem;
-  border-radius: 14px;
-  border: 1px solid var(--eg-border-subtle);
-}
-.eg-console-label {
-  font-size: .7rem;
-  color: var(--eg-text-dim);
-}
-.eg-console-main {
-  font-weight: 600;
-}
+            <div class="eg-hero-actions">
+              <a href="#contact" class="eg-btn eg-btn-primary">
+                Connect to HQ
+              </a>
+              <a href="#console" class="eg-btn eg-btn-ghost">
+                View Command Console
+              </a>
+            </div>
+          </div>
 
-/* GENERIC SECTION */
-.eg-section {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  border-radius: 20px;
-  background: rgba(6, 10, 24, 0.9);
-  border: 1px solid var(--eg-border-subtle);
-}
-.eg-section-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
+          <!-- Right: Command Snapshot -->
+          <aside class="eg-console">
+            <div class="eg-console-header">
+              <span class="eg-console-label">HQ COMMAND SNAPSHOT</span>
+              <span class="eg-console-status">
+                <span class="eg-status-dot"></span>
+                SYSTEM ONLINE
+              </span>
+            </div>
 
-@media (max-width: 840px) {
-  .eg-section-grid {
-    grid-template-columns: 1fr;
-  }
-}
+            <div class="eg-console-grid">
+              <div class="eg-console-card">
+                <div class="eg-console-label">Signal layer</div>
+                <div class="eg-console-main">Routing • Exceptions</div>
+                <p class="eg-console-sub">No wandering freight. No dead comms.</p>
+              </div>
 
-/* ================================================
-   CUSTOM IMAGE ART SECTIONS (THE GOLD BRAND IMAGES)
-   ================================================ */
+              <div class="eg-console-card">
+                <div class="eg-console-label">Human layer</div>
+                <div class="eg-console-main">Clear rules • Direct language</div>
+                <p class="eg-console-sub">No passive-aggressive emails. No confusion.</p>
+              </div>
 
-.eg-section.eg-brand,
-.eg-section.eg-divisions,
-.eg-section.eg-console-art,
-.eg-section.eg-logo-pack {
-  margin-top: 4rem;
-}
+              <div class="eg-console-card">
+                <div class="eg-console-label">Noise policy</div>
+                <div class="eg-console-main">Zero tolerated</div>
+                <p class="eg-console-sub">No ghosts. No “I thought.” Only clear moves.</p>
+              </div>
 
-/* Container for each image block */
-.eg-brand-inner,
-.eg-divisions-inner,
-.eg-console-art-inner,
-.eg-logo-pack-inner {
-  max-width: 1120px;
-  margin: 0 auto;
-}
+              <div class="eg-console-card">
+                <div class="eg-console-label">HQ command view</div>
+                <div class="eg-console-main">Every node visible</div>
+                <p class="eg-console-sub">
+                  Transport, Properties, Interstate, Stateline, future nodes.
+                </p>
+              </div>
+            </div>
 
-/* Image styling */
-.eg-img-full {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 1.5rem;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
+            <div class="eg-console-footer">
+              <span class="eg-console-footer-label">CURRENT MODE</span>
+              <span class="eg-console-footer-value">
+                CALM • PRECISE • DECISIVE
+              </span>
+            </div>
+          </aside>
+        </div>
+      </section>
 
-/* Section Headers Above Images */
-.eg-section-header {
-  max-width: 1120px;
-  margin: 0 auto 1.5rem;
-}
-.eg-section-header h2 {
-  font-size: 1.4rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: #f7f3ff;
-  margin-bottom: 0.4rem;
-}
-.eg-section-header p {
-  color: rgba(222, 229, 255, 0.7);
-  font-size: 0.98rem;
-}
+      <!-- =====================
+           BRAND ATMOSPHERE
+      ====================== -->
+      <section class="eg-section eg-brand">
+        <div class="eg-brand-inner">
+          <img
+            src="assets/images/brand_atmosphere.png"
+            alt="Eclipse Global HQ horizon and atmosphere"
+            class="eg-img-full"
+          />
+        </div>
+      </section>
 
-/* FOOTER */
-.eg-footer {
-  margin-top: 4rem;
-  padding: 2rem 0;
-  border-top: 1px solid var(--eg-border-subtle);
-  background: rgba(5, 7, 18, 0.8);
-}
+      <!-- ====================================
+           SECTION – “WHAT HQ ACTUALLY DOES”
+      ===================================== -->
+      <section class="eg-section" id="hq-roles">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">
+            What Eclipse Global HQ actually does
+          </h2>
+          <p class="eg-section-subtitle">
+            HQ is not another brand. It is the operating brain that keeps each Eclipse
+            company clean, aligned, and easy to work with — from the first email to the
+            last invoice.
+          </p>
+        </header>
 
-.eg-footer-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+        <div class="eg-section-grid">
+          <article class="eg-card">
+            <h3 class="eg-card-title">01. Direction of the Kingdom</h3>
+            <p class="eg-card-body">
+              Sets the non-negotiable standards for how we speak, respond, and execute.
+              HQ protects the culture: respect, clarity, and follow-through — no matter
+              which division someone touches.
+            </p>
+          </article>
 
-.eg-footer-text {
-  color: var(--eg-text-soft);
-  max-width: 280px;
-}
+          <article class="eg-card">
+            <h3 class="eg-card-title">02. System Architecture</h3>
+            <p class="eg-card-body">
+              Chooses and maintains the digital stack: email, domains, routing,
+              automation, AI support, and security. One clean spine for every Eclipse
+              company to plug into.
+            </p>
+          </article>
 
-.eg-footer-meta {
-  color: var(--eg-text-dim);
-}
+          <article class="eg-card">
+            <h3 class="eg-card-title">03. Live Command &amp; Review</h3>
+            <p class="eg-card-body">
+              Holds the dashboards, playbooks, and reviews that keep operations from
+              drifting. If something breaks, HQ doesn’t panic — HQ adjusts the system
+              and locks in the fix.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- =====================
+           DIVISION LOGO GRID
+      ====================== -->
+      <section class="eg-section eg-divisions">
+        <div class="eg-section-header">
+          <h2>Eclipse divisions under HQ</h2>
+          <p>Every company is a node. HQ keeps them aligned.</p>
+        </div>
+        <div class="eg-divisions-inner">
+          <img
+            src="assets/images/division_logos.png"
+            alt="Logos for Eclipse Global Logistics, Eclipse Transport, Stone &amp; Ember, Eclipse Properties"
+            class="eg-img-full"
+          />
+        </div>
+      </section>
+
+      <!-- ================================
+           SECTION – DIVISION LINKS
+      ================================= -->
+      <section id="divisions" class="eg-section">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">Division command paths</h2>
+          <p class="eg-section-subtitle">
+            Each company keeps its own personality. HQ keeps the structure, standards,
+            and signal the same.
+          </p>
+        </header>
+
+        <div class="eg-division-grid">
+          <!-- Transport -->
+          <article class="eg-division-card">
+            <div class="eg-division-chip">Transport</div>
+            <h3 class="eg-division-title">Eclipse Transport Co.</h3>
+            <p class="eg-division-body">
+              Dry-van and regional freight with disciplined communication, proactive
+              updates, and lanes that actually hold.
+            </p>
+            <a href="https://eclipsetransportco.com" class="eg-division-link">
+              Visit Transport node →
+            </a>
+          </article>
+
+          <!-- Properties -->
+          <article class="eg-division-card">
+            <div class="eg-division-chip">Properties</div>
+            <h3 class="eg-division-title">Eclipse Properties / Stone &amp; Ember</h3>
+            <p class="eg-division-body">
+              Mixed-use properties, yards, and hubs built for freight, families, and
+              future expansion — not just square footage on paper.
+            </p>
+            <a href="#" class="eg-division-link">
+              Properties node (coming online) →
+            </a>
+          </article>
+
+          <!-- Interstate / Stateline -->
+          <article class="eg-division-card">
+            <div class="eg-division-chip">Interstate • Stateline</div>
+            <h3 class="eg-division-title">Long-range &amp; border lanes</h3>
+            <p class="eg-division-body">
+              Future arms of Eclipse for interstate and stateline freight — already
+              architected inside HQ so the moment they launch, they plug in clean.
+            </p>
+            <a href="#contact" class="eg-division-link">
+              Ask HQ about upcoming lanes →
+            </a>
+          </article>
+        </div>
+      </section>
+
+      <!-- =====================
+           COMMAND INTERFACE ART
+      ====================== -->
+      <section class="eg-section eg-console-art">
+        <div class="eg-section-header">
+          <h2>Command interface</h2>
+          <p>Where Eclipse Global HQ speaks to the outside world.</p>
+        </div>
+        <div class="eg-console-art-inner">
+          <img
+            src="assets/images/command_interface.png"
+            alt="Eclipse Global HQ command interface panel"
+            class="eg-img-full"
+          />
+        </div>
+      </section>
+
+      <!-- =================================
+           SECTION – COMMAND CONSOLE TEXT
+      ================================== -->
+      <section id="console" class="eg-section eg-section--console">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">Central Command • System Online</h2>
+          <p class="eg-section-subtitle">
+            The language of HQ is closer to a command console than a brochure.
+            Clear prompts. Clear responses. No mystery.
+          </p>
+        </header>
+
+        <div class="eg-console-text-grid">
+          <div class="eg-console-text-col">
+            <p class="eg-console-line">&gt; INITIALIZING: Eclipse Global HQ …</p>
+            <p class="eg-console-line">
+              &gt; NODES ONLINE: Transport • Interstate • Stateline • Properties
+            </p>
+            <p class="eg-console-line">
+              &gt; MODE: CALM • PRECISE • DECISIVE
+            </p>
+            <p class="eg-console-line">
+              &gt; HUMAN RULE: “No chaos. No confusion. Only clear moves.”
+            </p>
+          </div>
+          <div class="eg-console-text-col">
+            <p class="eg-console-note">
+              If a process creates fog, HQ rewrites it. If communication breaks, HQ
+              rewires it. Everyone plugged into Eclipse should feel one thing:
+              predictable, steady command.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================
+           CREST / LOGO PACK
+      ====================== -->
+      <section class="eg-section eg-logo-pack">
+        <div class="eg-section-header">
+          <h2>Signal of the kingdom</h2>
+          <p>The marks that carry Eclipse authority into every lane and property.</p>
+        </div>
+        <div class="eg-logo-pack-inner">
+          <img
+            src="assets/images/logo_pack.png"
+            alt="Eclipse Global HQ crests and logo elements"
+            class="eg-img-full"
+          />
+        </div>
+      </section>
+
+      <!-- =========================
+           CONTACT / CTA
+      ========================== -->
+      <section id="contact" class="eg-section eg-section--contact">
+        <div class="eg-contact-layout">
+          <div class="eg-contact-copy">
+            <h2 class="eg-section-title">Plug your world into Eclipse HQ</h2>
+            <p class="eg-section-subtitle">
+              Whether you’re a shipper, carrier, partner, or future division,
+              everything starts with one clear conversation with HQ.
+            </p>
+
+            <ul class="eg-contact-list">
+              <li>One inbox: <strong>hq@eclipseglobalhq.com</strong></li>
+              <li>Aligned responses — no bouncing between brands</li>
+              <li>Clarity first, paperwork second</li>
+            </ul>
+          </div>
+
+          <div class="eg-contact-panel">
+            <h3 class="eg-contact-title">Signal HQ</h3>
+            <p class="eg-contact-note">
+              Send your route, your question, or your idea. HQ will respond with
+              next-step options — not vague promises.
+            </p>
+            <a href="mailto:hq@eclipseglobalhq.com" class="eg-btn eg-btn-primary eg-btn-full">
+              Email HQ Command
+            </a>
+            <p class="eg-contact-small">
+              Prefer a form later? We’ll plug that in once the rest of the system is
+              live. For now, direct contact keeps the signal clean.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- =========================
+       FOOTER
+  ========================== -->
+  <footer class="eg-footer">
+    <div class="eg-container eg-footer-inner">
+      <div class="eg-footer-left">
+        <div class="eg-logo eg-logo--small">
+          <div class="eg-logo-mark">EG</div>
+          <div class="eg-logo-copy">
+            <span class="eg-logo-text">ECLIPSE GLOBAL HQ</span>
+            <span class="eg-tagline">BRAIN • SIGNAL • INFRASTRUCTURE</span>
+          </div>
+        </div>
+        <p class="eg-footer-text">
+          Built as the quiet operating system for every Eclipse company.
+        </p>
+      </div>
+
+      <div class="eg-footer-right">
+        <p class="eg-footer-meta">
+          <span>© <span data-eg-year></span> Eclipse Global HQ.</span>
+          <span class="eg-footer-dot">•</span>
+          <span>Central Command – System Online.</span>
+        </p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

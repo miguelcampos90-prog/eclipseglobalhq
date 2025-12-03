@@ -1,1 +1,84 @@
 
+// Base URL for your backend
+const BASE_URL = "https://eclipse-command-backend-37886694782.us-central1.run.app";
+
+// Utility: Render HTML safely
+function html(strings, ...values) {
+  return strings.reduce((acc, str, i) => acc + str + (values[i] || ""), "");
+}
+
+// =============================
+// 1. LIVE OPS FEED
+// =============================
+async function loadOpsFeed() {
+  try {
+    const res = await fetch(`${BASE_URL}/ops/recent`);
+    const data = await res.json();
+
+    const container = document.getElementById("opsFeed");
+
+    if (!data.events || data.events.length === 0) {
+      container.innerHTML = "<p>No recent operations logged.</p>";
+      return;
+    }
+
+    container.innerHTML = data.events
+      .map(
+        (e) => html`
+        <div class="eg-op-item">
+          <strong>[${e.timestamp}]</strong>
+          <br/>
+          <span>${e.source} → ${e.action} → ${e.entity}</span>
+          <br/>
+          <small>${e.details}</small>
+          <br/>
+          <em>${e.metadata}</em>
+        </div>
+      `
+      )
+      .join("");
+  } catch (err) {
+    document.getElementById("opsFeed").innerHTML =
+      "<p>Error loading ops feed.</p>";
+  }
+}
+
+// =============================
+// 2. SYSTEM SUMMARY
+// =============================
+async function loadOpsSummary() {
+  try {
+    const res = await fetch(`${BASE_URL}/ops/summary`);
+    const data = await res.json();
+    const summary = data.summary;
+
+    const container = document.getElementById("opsSummary");
+
+    container.innerHTML = html`
+      <div class="eg-summary-grid">
+        <div class="eg-summary-item">
+          <strong>Total Ops:</strong> ${summary.total}
+        </div>
+        <div class="eg-summary-item">
+          <strong>By Source:</strong>
+          <pre>${JSON.stringify(summary.bySource, null, 2)}</pre>
+        </div>
+        <div class="eg-summary-item">
+          <strong>By Action:</strong>
+          <pre>${JSON.stringify(summary.byAction, null, 2)}</pre>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    document.getElementById("opsSummary").innerHTML =
+      "<p>Error loading summary.</p>";
+  }
+}
+
+// =============================
+// INIT DASHBOARD
+// =============================
+window.addEventListener("DOMContentLoaded", () => {
+  loadOpsFeed();
+  loadOpsSummary();
+});

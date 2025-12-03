@@ -47,3 +47,47 @@ function initCurrentYear() {
   const year = new Date().getFullYear();
   yearSpans.forEach((span) => (span.textContent = year));
 }
+async function submitLead(event) {
+  event.preventDefault();
+
+  const fullName = document.getElementById("fullName").value;
+  const email = document.getElementById("email").value;
+  const phone = document.getElementById("phone").value;
+  const company = document.getElementById("company").value;
+  const needs = document.getElementById("needs").value;
+  const selectedNode = document.getElementById("selectedNode").value;
+  const notes = document.getElementById("notes").value;
+
+  const payload = {
+    fullName,
+    email,
+    phone,
+    company,
+    needs,
+    selectedNode,
+    pageSource: "HQ Form",
+    notes
+  };
+
+  try {
+    const res = await fetch("https://eclipse-command-backend-37886694782.us-central1.run.app/hq/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.status === "OK") {
+      document.getElementById("formStatus").textContent =
+        "HQ received your signal. Command will reach out shortly.";
+      document.getElementById("hqLeadForm").reset();
+    } else {
+      document.getElementById("formStatus").textContent =
+        "Something went wrong. Try again or email HQ directly.";
+    }
+  } catch (error) {
+    document.getElementById("formStatus").textContent =
+      "Network issue. Please try again.";
+  }
+}

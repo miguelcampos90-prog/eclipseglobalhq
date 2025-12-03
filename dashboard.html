@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eclipse HQ – Command Dashboard</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script src="assets/js/dashboard.js" defer></script>
+</head>
+
+<body class="eg-body">
+
+  <header class="eg-header">
+    <div class="eg-container eg-header-inner">
+      <div class="eg-logo">
+        <div class="eg-logo-mark">EG</div>
+        <div class="eg-logo-copy">
+          <span class="eg-logo-text">ECLIPSE GLOBAL HQ</span>
+          <span class="eg-tagline">COMMAND CONSOLE</span>
+        </div>
+      </div>
+      <nav class="eg-nav">
+        <a href="index.html" class="eg-nav-link">Home</a>
+        <a href="dashboard.html" class="eg-nav-link eg-active">Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="eg-shell">
+    <div class="eg-container">
+
+      <h2 class="eg-section-title">HQ Command Dashboard</h2>
+
+      <!-- Live Ops Feed -->
+      <section class="eg-section">
+        <h3>Live Ops Feed</h3>
+        <div id="opsFeed" class="eg-box"></div>
+      </section>
+
+      <!-- System Summary -->
+      <section class="eg-section">
+        <h3>System Summary</h3>
+        <div id="opsSummary" class="eg-box"></div>
+      </section>
+
+      <!-- Lead Intake -->
+      <section class="eg-section">
+        <h3>Recent Lead Intake</h3>
+        <div id="leadWindow" class="eg-box"></div>
+      </section>
+
+      <!-- Governance Signals -->
+      <section class="eg-section">
+        <h3>Governance & Compliance Signals</h3>
+        <div id="govSignals" class="eg-box"></div>
+      </section>
+
+    </div>
+  </main>
+
+</body>
+</html>

@@ -442,10 +442,49 @@
             <a href="mailto:hq@eclipseglobalhq.com" class="eg-btn eg-btn-primary eg-btn-full">
               Email HQ Command
             </a>
-            <p class="eg-contact-small">
-              Prefer a form later? We’ll plug that in once the rest of the system is
-              live. For now, direct contact keeps the signal clean.
-            </p>
+<form id="hqLeadForm" class="eg-form" onsubmit="submitLead(event)">
+  <div class="eg-form-group">
+    <input type="text" id="fullName" placeholder="Full Name" required />
+  </div>
+
+  <div class="eg-form-group">
+    <input type="email" id="email" placeholder="Email Address" required />
+  </div>
+
+  <div class="eg-form-group">
+    <input type="text" id="phone" placeholder="Phone Number" />
+  </div>
+
+  <div class="eg-form-group">
+    <input type="text" id="company" placeholder="Company (Optional)" />
+  </div>
+
+  <div class="eg-form-group">
+    <input type="text" id="needs" placeholder="What do you need support in?" />
+  </div>
+
+  <div class="eg-form-group">
+    <select id="selectedNode">
+      <option value="Global">Global</option>
+      <option value="Transport">Transport</option>
+      <option value="Freight">Freight</option>
+      <option value="Commercial">Commercial</option>
+      <option value="Residential">Residential</option>
+      <option value="Interstate">Interstate</option>
+      <option value="Stateline">Stateline</option>
+    </select>
+  </div>
+
+  <div class="eg-form-group">
+    <textarea id="notes" placeholder="Your route / question / context"></textarea>
+  </div>
+
+  <button type="submit" class="eg-btn eg-btn-primary eg-btn-full">
+    Send to HQ
+  </button>
+
+  <p id="formStatus" class="eg-contact-small" style="margin-top:10px;"></p>
+</form>
           </div>
         </div>
       </section>

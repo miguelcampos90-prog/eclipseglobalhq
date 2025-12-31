@@ -1,7 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
   initMobileNav();
+  initNavDropdowns();
   initSmoothScroll();
   initCurrentYear();
+  initContactForm();
 });
 
 function initMobileNav() {
@@ -18,10 +20,57 @@ function initMobileNav() {
   });
 
   nav.addEventListener("click", (event) => {
+    // Close mobile nav when a link is clicked (dropdown toggle is a button, so it won't trigger)
     if (event.target.matches("a") && nav.classList.contains(ACTIVE_CLASS)) {
       nav.classList.remove(ACTIVE_CLASS);
       toggle.setAttribute("aria-expanded", "false");
     }
+  });
+}
+
+function initNavDropdowns() {
+  const dropdowns = Array.from(document.querySelectorAll("[data-eg-dropdown]"));
+  if (dropdowns.length === 0) return;
+
+  function closeAll(exceptEl) {
+    dropdowns.forEach((dd) => {
+      if (exceptEl && dd === exceptEl) return;
+      dd.classList.remove("eg-dropdown--open");
+      const btn = dd.querySelector("[data-eg-dropdown-toggle]");
+      if (btn) btn.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  dropdowns.forEach((dd) => {
+    const toggle = dd.querySelector("[data-eg-dropdown-toggle]");
+    const menu = dd.querySelector("[data-eg-dropdown-menu]");
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      const isOpen = dd.classList.toggle("eg-dropdown--open");
+      toggle.setAttribute("aria-expanded", String(isOpen));
+      if (isOpen) closeAll(dd);
+    });
+
+    // Close on menu item click
+    menu.addEventListener("click", (e) => {
+      if (e.target.matches("a")) {
+        dd.classList.remove("eg-dropdown--open");
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  });
+
+  // Close on outside click
+  document.addEventListener("click", (e) => {
+    const clickedInside = dropdowns.some((dd) => dd.contains(e.target));
+    if (!clickedInside) closeAll();
+  });
+
+  // Close on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAll();
   });
 }
 
@@ -47,47 +96,55 @@ function initCurrentYear() {
   const year = new Date().getFullYear();
   yearSpans.forEach((span) => (span.textContent = year));
 }
-async function submitLead(event) {
-  event.preventDefault();
 
-  const fullName = document.getElementById("fullName").value;
-  const email = document.getElementById("email").value;
-  const phone = document.getElementById("phone").value;
-  const company = document.getElementById("company").value;
-  const needs = document.getElementById("needs").value;
-  const selectedNode = document.getElementById("selectedNode").value;
-  const notes = document.getElementById("notes").value;
+function initContactForm() {
+  const form = document.getElementById("hqLeadForm");
+  const statusEl = document.getElementById("formStatus");
 
-  const payload = {
-    fullName,
-    email,
-    phone,
-    company,
-    needs,
-    selectedNode,
-    pageSource: "HQ Form",
-    notes
-  };
+  if (!form || !statusEl) return;
 
-  try {
-    const res = await fetch("https://eclipse-command-backend-37886694782.us-central1.run.app/hq/lead", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-    const data = await res.json();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn ? submitBtn.textContent : "";
 
-    if (data.status === "OK") {
-      document.getElementById("formStatus").textContent =
-        "HQ received your signal. Command will reach out shortly.";
-      document.getElementById("hqLeadForm").reset();
-    } else {
-      document.getElementById("formStatus").textContent =
-        "Something went wrong. Try again or email HQ directly.";
+    const setStatus = (text) => {
+      statusEl.textContent = text;
+    };
+
+    setStatus("Sending…");
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending…";
     }
-  } catch (error) {
-    document.getElementById("formStatus").textContent =
-      "Network issue. Please try again.";
-  }
+
+    try {
+      const formData = new FormData(form);
+      const res = await fetch(form.action, {
+        method: "POST",
+        body: formData,
+        headers: { Accept: "application/json" },
+      });
+
+      if (res.ok) {
+        setStatus("Sent.");
+        form.reset();
+
+        // Clear quickly (~2s) and restore button
+        setTimeout(() => {
+          setStatus("");
+        }, 2000);
+      } else {
+        setStatus("Error. Please try again or email contact@eclipseglobalhq.com.");
+      }
+    } catch (err) {
+      setStatus("Network issue. Please try again or email contact@eclipseglobalhq.com.");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText || "Send to HQ";
+      }
+    }
+  });
 }

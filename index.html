@@ -450,29 +450,33 @@
             <a href="mailto:hq@eclipseglobalhq.com" class="eg-btn eg-btn-primary eg-btn-full">
               Email HQ Command
             </a>
-<form id="hqLeadForm" class="eg-form" onsubmit="submitLead(event)">
+<form id="hqLeadForm" class="eg-form" action="https://formspree.io/f/maqnwvko" method="POST">
+  <!-- Optional: makes the email subject consistent -->
+  <input type="hidden" name="_subject" value="HQ Lead — eclipseglobalhq.com" />
+  <input type="hidden" name="source" value="eclipseglobalhq.com/contact" />
+
   <div class="eg-form-group">
-    <input type="text" id="fullName" placeholder="Full Name" required />
+    <input type="text" id="fullName" name="fullName" placeholder="Full Name" required />
   </div>
 
   <div class="eg-form-group">
-    <input type="email" id="email" placeholder="Email Address" required />
+    <input type="email" id="email" name="email" placeholder="Email Address" required />
   </div>
 
   <div class="eg-form-group">
-    <input type="text" id="phone" placeholder="Phone Number" />
+    <input type="text" id="phone" name="phone" placeholder="Phone Number" />
   </div>
 
   <div class="eg-form-group">
-    <input type="text" id="company" placeholder="Company (Optional)" />
+    <input type="text" id="company" name="company" placeholder="Company (Optional)" />
   </div>
 
   <div class="eg-form-group">
-    <input type="text" id="needs" placeholder="What do you need support in?" />
+    <input type="text" id="needs" name="needs" placeholder="What do you need support in?" />
   </div>
 
   <div class="eg-form-group">
-    <select id="selectedNode">
+    <select id="selectedNode" name="selectedNode">
       <option value="Global">Global</option>
       <option value="Transport">Transport</option>
       <option value="Freight">Freight</option>
@@ -483,8 +487,9 @@
     </select>
   </div>
 
+
   <div class="eg-form-group">
-    <textarea id="notes" placeholder="Your route / question / context"></textarea>
+     <textarea id="notes" name="notes" placeholder="Your route / question / context"></textarea>
   </div>
 
   <button type="submit" class="eg-btn eg-btn-primary eg-btn-full">

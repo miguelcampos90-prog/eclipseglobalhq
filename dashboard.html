@@ -2,14 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JBZT0WCXGP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-JBZT0WCXGP');
+  </script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eclipse HQ – Command Dashboard</title>
+
   <link rel="stylesheet" href="assets/css/style.css" />
+  <script src="assets/js/main.js" defer></script>
   <script src="assets/js/dashboard.js" defer></script>
 </head>
 
 <body class="eg-body">
-
   <header class="eg-header">
     <div class="eg-container eg-header-inner">
       <div class="eg-logo">
@@ -19,16 +30,56 @@
           <span class="eg-tagline">COMMAND CONSOLE</span>
         </div>
       </div>
-      <nav class="eg-nav">
-        <a href="index.html" class="eg-nav-link">Home</a>
-        <a href="dashboard.html" class="eg-nav-link eg-active">Dashboard</a>
+
+      <nav class="eg-nav" data-eg-nav>
+        <a href="index.html#core" class="eg-nav-link">Home</a>
+
+        <div class="eg-nav-dropdown" data-eg-dropdown>
+          <button
+            class="eg-nav-link eg-nav-dropdown-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-eg-dropdown-toggle
+          >
+            Eclipse Divisions <span class="eg-nav-caret" aria-hidden="true">▼</span>
+          </button>
+
+          <div class="eg-dropdown-menu" role="menu" data-eg-dropdown-menu>
+            <a class="eg-dropdown-link" role="menuitem" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">
+              Eclipse Global Logistics
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="https://eclipsetransportco.com" target="_blank" rel="noopener">
+              Eclipse Transport Co.
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="https://stoneandemberco.com" target="_blank" rel="noopener">
+              Stone &amp; Ember
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="https://eclipsepropertiesmanagement.com" target="_blank" rel="noopener">
+              Eclipse Properties Management
+            </a>
+          </div>
+        </div>
+
+        <a href="dashboard.html" class="eg-nav-link">Dashboard</a>
       </nav>
+
+      <!-- Mobile toggle -->
+      <button
+        class="eg-nav-toggle"
+        type="button"
+        aria-label="Toggle navigation"
+        aria-expanded="false"
+        data-eg-nav-toggle
+      >
+        <span class="eg-nav-toggle-line"></span>
+        <span class="eg-nav-toggle-line"></span>
+      </button>
     </div>
   </header>
 
   <main class="eg-shell">
     <div class="eg-container">
-
       <h2 class="eg-section-title">HQ Command Dashboard</h2>
 
       <!-- Live Ops Feed -->
@@ -51,12 +102,10 @@
 
       <!-- Governance Signals -->
       <section class="eg-section">
-        <h3>Governance & Compliance Signals</h3>
+        <h3>Governance &amp; Compliance Signals</h3>
         <div id="govSignals" class="eg-box"></div>
       </section>
-
     </div>
   </main>
-
 </body>
 </html>

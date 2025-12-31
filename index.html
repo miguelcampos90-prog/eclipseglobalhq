@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-    <!-- Google tag (gtag.js) -->
+  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JBZT0WCXGP"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -10,10 +10,7 @@
     gtag('js', new Date());
     gtag('config', 'G-JBZT0WCXGP');
   </script>
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eclipse Global HQ – Central Command</title>
 
   <!-- Styles -->
@@ -39,10 +36,36 @@
 
       <!-- Desktop nav -->
       <nav class="eg-nav" data-eg-nav>
-        <a href="#core" class="eg-nav-link">HQ Core</a>
-        <a href="#divisions" class="eg-nav-link">Eclipse Divisions</a>
-        <a href="#console" class="eg-nav-link">Command Console</a>
-        <a href="#contact" class="eg-nav-link">Contact</a>
+        <a href="#core" class="eg-nav-link">Home</a>
+
+        <div class="eg-nav-dropdown" data-eg-dropdown>
+          <button
+            class="eg-nav-link eg-nav-dropdown-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-eg-dropdown-toggle
+          >
+            Eclipse Divisions <span class="eg-nav-caret" aria-hidden="true">▼</span>
+          </button>
+
+          <div class="eg-dropdown-menu" role="menu" data-eg-dropdown-menu>
+            <a class="eg-dropdown-link" role="menuitem" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">
+              Eclipse Global Logistics
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="https://eclipsetransportco.com" target="_blank" rel="noopener">
+              Eclipse Transport Co.
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="https://stoneandemberco.com" target="_blank" rel="noopener">
+              Stone &amp; Ember
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="https://eclipsepropertiesmanagement.com" target="_blank" rel="noopener">
+              Eclipse Properties Management
+            </a>
+          </div>
+        </div>
+
+        <a href="dashboard.html" class="eg-nav-link">Dashboard</a>
       </nav>
 
       <!-- Mobile toggle -->
@@ -160,82 +183,81 @@
       <!-- =====================
            BRAND ATMOSPHERE
       ====================== -->
-          <!-- Brand Atmosphere Banner -->
-    <section class="eg-section eg-brand">
-      <header class="eg-section-header">
-        <h2 class="eg-section-title">The Eclipse horizon</h2>
-        <p class="eg-section-subtitle">
-          Where precision meets power. Where vision becomes infrastructure. Where worlds are built.
-        </p>
-      </header>
-      <a href="#core" class="eg-image-link">
-        <div class="eg-brand-inner">
-          <img
-            src="assets/images/brand_atmosphere.png"
-            alt="Eclipse Global HQ golden horizon and atmosphere artwork"
-            class="eg-img-full"
-          />
-        </div>
-      </a>
-    </section>
+      <!-- Brand Atmosphere Banner -->
+      <section class="eg-section eg-brand">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">The Eclipse horizon</h2>
+          <p class="eg-section-subtitle">
+            Where precision meets power. Where vision becomes infrastructure. Where worlds are built.
+          </p>
+        </header>
+        <a href="#core" class="eg-image-link">
+          <div class="eg-brand-inner">
+            <img
+              src="assets/images/brand_atmosphere.png"
+              alt="Eclipse Global HQ golden horizon and atmosphere artwork"
+              class="eg-img-full"
+            />
+          </div>
+        </a>
+      </section>
 
-    <!-- Division Logos Grid -->
-    <section class="eg-section eg-divisions">
-      <header class="eg-section-header">
-        <h2 class="eg-section-title">Eclipse divisions under HQ</h2>
-        <p class="eg-section-subtitle">
-          Each company holds its own story. HQ keeps the structure, standards, and signal aligned.
-        </p>
-      </header>
-      <a href="#divisions" class="eg-image-link">
-        <div class="eg-divisions-inner">
-          <img
-            src="assets/images/division_logos.png"
-            alt="Logos for Eclipse Global Logistics, Eclipse Transport, Stone &amp; Ember, and Eclipse Properties"
-            class="eg-img-full"
-          />
-        </div>
-      </a>
-    </section>
+      <!-- Division Logos Grid -->
+      <section class="eg-section eg-divisions">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">Eclipse divisions under HQ</h2>
+          <p class="eg-section-subtitle">
+            Each company holds its own story. HQ keeps the structure, standards, and signal aligned.
+          </p>
+        </header>
+        <a href="#divisions" class="eg-image-link">
+          <div class="eg-divisions-inner">
+            <img
+              src="assets/images/division_logos.png"
+              alt="Logos for Eclipse Global Logistics, Eclipse Transport, Stone &amp; Ember, and Eclipse Properties"
+              class="eg-img-full"
+            />
+          </div>
+        </a>
+      </section>
 
-    <!-- Command Interface Panel -->
-    <section class="eg-section eg-console-art">
-      <header class="eg-section-header">
-        <h2 class="eg-section-title">Command interface</h2>
-        <p class="eg-section-subtitle">
-          The way Eclipse Global HQ talks to the outside world — clear prompts, clear responses.
-        </p>
-      </header>
-      <a href="#console" class="eg-image-link">
-        <div class="eg-console-art-inner">
-          <img
-            src="assets/images/command_interface.png"
-            alt="Eclipse Global HQ command interface panel artwork"
-            class="eg-img-full"
-          />
-        </div>
-      </a>
-    </section>
+      <!-- Command Interface Panel -->
+      <section class="eg-section eg-console-art">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">Command interface</h2>
+          <p class="eg-section-subtitle">
+            The way Eclipse Global HQ talks to the outside world — clear prompts, clear responses.
+          </p>
+        </header>
+        <a href="#console" class="eg-image-link">
+          <div class="eg-console-art-inner">
+            <img
+              src="assets/images/command_interface.png"
+              alt="Eclipse Global HQ command interface panel artwork"
+              class="eg-img-full"
+            />
+          </div>
+        </a>
+      </section>
 
-    <!-- Crest / Logo Pack Strip -->
-    <section class="eg-section eg-logo-pack">
-      <header class="eg-section-header">
-        <h2 class="eg-section-title">Signal of the kingdom</h2>
-        <p class="eg-section-subtitle">
-          The marks that carry Eclipse authority into every lane, yard, and property HQ touches.
-        </p>
-      </header>
-      <a href="#contact" class="eg-image-link">
-        <div class="eg-logo-pack-inner">
-          <img
-            src="assets/images/logo_pack.png"
-            alt="Eclipse Global HQ crest and logo elements"
-            class="eg-img-full"
-          />
-        </div>
-      </a>
-    </section>
-
+      <!-- Crest / Logo Pack Strip -->
+      <section class="eg-section eg-logo-pack">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">Signal of the kingdom</h2>
+          <p class="eg-section-subtitle">
+            The marks that carry Eclipse authority into every lane, yard, and property HQ touches.
+          </p>
+        </header>
+        <a href="#contact" class="eg-image-link">
+          <div class="eg-logo-pack-inner">
+            <img
+              src="assets/images/logo_pack.png"
+              alt="Eclipse Global HQ crest and logo elements"
+              class="eg-img-full"
+            />
+          </div>
+        </a>
+      </section>
 
       <!-- ====================================
            SECTION – “WHAT HQ ACTUALLY DOES”
@@ -434,8 +456,17 @@
               everything starts with one clear conversation with HQ.
             </p>
 
+            <div class="eg-contact-fallback">
+              <p class="eg-contact-small">
+                <span class="eg-contact-small-label">Public email:</span>
+                <a class="eg-contact-email" href="mailto:contact@eclipseglobalhq.com">contact@eclipseglobalhq.com</a>
+              </p>
+              <p class="eg-contact-small eg-contact-route-note">
+                Note: routes to <strong>admin@eclipsegloballogistics.com</strong> (Phase 1)
+              </p>
+            </div>
+
             <ul class="eg-contact-list">
-              <li>One inbox: <strong>hq@eclipseglobalhq.com</strong></li>
               <li>Aligned responses — no bouncing between brands</li>
               <li>Clarity first, paperwork second</li>
             </ul>
@@ -447,57 +478,56 @@
               Send your route, your question, or your idea. HQ will respond with
               next-step options — not vague promises.
             </p>
-            <a href="mailto:hq@eclipseglobalhq.com" class="eg-btn eg-btn-primary eg-btn-full">
-              Email HQ Command
-            </a>
-<form id="hqLeadForm" class="eg-form" action="https://formspree.io/f/maqnwvko" method="POST">
-  <!-- Optional: makes the email subject consistent -->
-  <input type="hidden" name="_subject" value="HQ Lead — eclipseglobalhq.com" />
-  <input type="hidden" name="source" value="eclipseglobalhq.com/contact" />
 
-  <div class="eg-form-group">
-    <input type="text" id="fullName" name="fullName" placeholder="Full Name" required />
-  </div>
+            <form id="hqLeadForm" class="eg-form" action="https://formspree.io/f/maqnwvko" method="POST">
+              <input type="hidden" name="_subject" value="HQ Lead — eclipseglobalhq.com" />
+              <input type="hidden" name="source" value="eclipseglobalhq.com/contact" />
 
-  <div class="eg-form-group">
-    <input type="email" id="email" name="email" placeholder="Email Address" required />
-  </div>
+              <div class="eg-form-group">
+                <input type="text" id="fullName" name="fullName" placeholder="Full Name" required />
+              </div>
 
-  <div class="eg-form-group">
-    <input type="text" id="phone" name="phone" placeholder="Phone Number" />
-  </div>
+              <div class="eg-form-group">
+                <input type="email" id="email" name="email" placeholder="Email Address" required />
+              </div>
 
-  <div class="eg-form-group">
-    <input type="text" id="company" name="company" placeholder="Company (Optional)" />
-  </div>
+              <div class="eg-form-group">
+                <input type="text" id="phone" name="phone" placeholder="Phone Number" />
+              </div>
 
-  <div class="eg-form-group">
-    <input type="text" id="needs" name="needs" placeholder="What do you need support in?" />
-  </div>
+              <div class="eg-form-group">
+                <input type="text" id="company" name="company" placeholder="Company (Optional)" />
+              </div>
 
-  <div class="eg-form-group">
-    <select id="selectedNode" name="selectedNode">
-      <option value="Global">Global</option>
-      <option value="Transport">Transport</option>
-      <option value="Freight">Freight</option>
-      <option value="Commercial">Commercial</option>
-      <option value="Residential">Residential</option>
-      <option value="Interstate">Interstate</option>
-      <option value="Stateline">Stateline</option>
-    </select>
-  </div>
+              <div class="eg-form-group">
+                <input type="text" id="needs" name="needs" placeholder="What do you need support in?" />
+              </div>
 
+              <div class="eg-form-group">
+                <select id="selectedNode" name="selectedNode">
+                  <option value="Global">Global</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Freight">Freight</option>
+                  <option value="Commercial">Commercial</option>
+                  <option value="Residential">Residential</option>
+                  <option value="Interstate">Interstate</option>
+                  <option value="Stateline">Stateline</option>
+                </select>
+              </div>
 
-  <div class="eg-form-group">
-     <textarea id="notes" name="notes" placeholder="Your route / question / context"></textarea>
-  </div>
+              <div class="eg-form-group">
+                <textarea id="notes" name="notes" placeholder="Your route / question / context"></textarea>
+              </div>
 
-  <button type="submit" class="eg-btn eg-btn-primary eg-btn-full">
-    Send to HQ
-  </button>
+              <button type="submit" class="eg-btn eg-btn-primary eg-btn-full">
+                Send to HQ
+              </button>
 
-  <p id="formStatus" class="eg-contact-small" style="margin-top:10px;"></p>
-</form>
+              <p id="formStatus" class="eg-form-status" aria-live="polite"></p>
+              <p class="eg-contact-small eg-contact-fallback-link">
+                If you prefer email: <a class="eg-contact-email" href="mailto:contact@eclipseglobalhq.com">contact@eclipseglobalhq.com</a>
+              </p>
+            </form>
           </div>
         </div>
       </section>

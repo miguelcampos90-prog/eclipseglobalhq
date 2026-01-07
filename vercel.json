@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "portal.eclipseglobalhq.com" }],
+      "destination": "/portal.html"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "console.eclipseglobalhq.com" }],
+      "destination": "/dashboard.html"
+    }
+  ]
+}

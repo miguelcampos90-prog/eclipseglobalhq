@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eclipse HQ Portal</title>
+
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script src="assets/js/main.js" defer></script>
+
+  <style>
+    /* Minimal safe styling in case your CSS doesn't cover portal layout yet */
+    .portal-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 16px; }
+    .portal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 20px; }
+    .portal-card { border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px; text-decoration: none; display: block; }
+    .portal-card h3 { margin: 0 0 6px 0; }
+    .portal-card p { margin: 0; opacity: 0.85; }
+  </style>
+</head>
+
+<body>
+  <main class="portal-wrap">
+    <h1>Eclipse HQ Portal</h1>
+    <p>Internal access point (link hub). Portal stays clean; tools live behind Console.</p>
+
+    <section class="portal-grid">
+      <a class="portal-card" href="https://console.eclipseglobalhq.com">
+        <h3>Open Console</h3>
+        <p>Admin dashboard (protected)</p>
+      </a>
+
+      <a class="portal-card" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">
+        <h3>Eclipse Global Logistics</h3>
+        <p>External / brand site</p>
+      </a>
+
+      <a class="portal-card" href="https://eclipsetransportco.com" target="_blank" rel="noopener">
+        <h3>Eclipse Transport</h3>
+        <p>External / brand site</p>
+      </a>
+
+      <a class="portal-card" href="https://stoneandemberco.com" target="_blank" rel="noopener">
+        <h3>Stone & Ember</h3>
+        <p>External / brand site</p>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

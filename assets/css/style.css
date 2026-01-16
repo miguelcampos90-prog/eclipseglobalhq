@@ -551,3 +551,118 @@ body.eg-body {
 @media (max-width: 840px) {
   .eg-footer-inner { flex-direction: column; }
 }
+/* =========================================================
+   HQ HERO (index.html) — styles for hero-globe + buttons
+   (Safe to add; does not break existing eg-* styles)
+========================================================= */
+
+.hero-globe {
+  position: relative;
+  min-height: 78vh;
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: radial-gradient(circle at top, #101532 0, #050712 50%, #020308 100%);
+}
+
+.globe-fallback,
+.globe-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* This prevents the “cross-lines + embedded text” from the image from dominating */
+.globe-fallback img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.22;
+  filter: blur(10px) saturate(0.7) brightness(0.45) contrast(1.12);
+  transform: scale(1.15);
+}
+
+/* Globe canvas exists for Step 3 (wiring), but won’t show until then */
+.globe-canvas {
+  opacity: 0;
+}
+
+.hero-overlay {
+  position: relative;
+  z-index: 2;
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 6rem 0 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.hero-title {
+  font-size: clamp(2.4rem, 4.6vw, 3.8rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.hero-subtitle {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+  color: rgba(245, 247, 255, 0.86);
+}
+
+.hero-taglines {
+  margin: 0.75rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: rgba(245, 247, 255, 0.92);
+}
+
+/* Buttons used in index.html (btn / btn-primary / btn-secondary) */
+.hero-ctas {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  margin-top: 1.1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.72rem 1.15rem;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 0.08s ease-out, border-color 0.15s ease-out, background 0.15s ease-out;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--eg-accent), var(--eg-signal-green));
+  color: #020308;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+}
+
+.btn-secondary {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(245, 247, 255, 0.88);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-secondary:hover {
+  border-color: var(--eg-accent);
+  color: #ffffff;
+}
+
+/* Mobile spacing */
+@media (max-width: 840px) {
+  .hero-overlay {
+    padding: 5.25rem 0 3.25rem;
+  }
+}

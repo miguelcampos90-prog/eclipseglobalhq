@@ -1,0 +1,10 @@
+{
+  "points": [
+    { "lat": 33.4484, "lng": -112.0740, "label": "Phoenix", "type": "logistics", "status": "active" },
+    { "lat": 42.3314, "lng": -83.0458, "label": "Detroit", "type": "hq", "status": "active" },
+    { "lat": 51.5074, "lng": -0.1278, "label": "London", "type": "network", "status": "planned" }
+  ],
+  "arcs": [
+    { "startLat": 33.4484, "startLng": -112.0740, "endLat": 42.3314, "endLng": -83.0458, "status": "active" }
+  ]
+}

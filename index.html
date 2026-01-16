@@ -10,13 +10,11 @@
     gtag('js', new Date());
     gtag('config', 'G-JBZT0WCXGP');
   </script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eclipse Global HQ – Central Command</title>
 
-  <!-- Styles -->
   <link rel="stylesheet" href="assets/css/style.css" />
-
-  <!-- Scripts -->
   <script src="assets/js/main.js" defer></script>
 </head>
 
@@ -33,37 +31,12 @@
           <span class="eg-tagline">BRAIN • SIGNAL • INFRASTRUCTURE</span>
         </div>
       </div>
-<!-- HERO: Globe Command Stage -->
-<section id="hero-globe" class="hero-globe">
-  <div id="globeFallback" class="globe-fallback" aria-hidden="true">
-    <!-- Poster fallback (Plan C). If you add a video later, we’ll swap this. -->
-    <img src="assets/visuals/globe_poster.webp" alt="" />
-  </div>
 
-  <div id="globeViz" class="globe-canvas" aria-hidden="true"></div>
-
-  <div class="hero-overlay">
-    <div class="hero-kicker">SYSTEM: ONLINE • MODE: CALM • PRECISE • DECISIVE</div>
-
-    <h1 class="hero-title">Eclipse Global HQ</h1>
-    <p class="hero-subtitle">Central Command for the Eclipse Network</p>
-
-    <p class="hero-taglines">
-      Quiet Command. Global Impact.<br />
-      One Standard. One Network. Worldwide.<br />
-      <span>Built on Loyalty. Run on Clarity.</span>
-    </p>
-
-    <div class="hero-ctas">
-      <a class="btn btn-primary" href="#contact">Connect to HQ</a>
-      <a class="btn btn-secondary" href="#divisions">View Divisions</a>
-    </div>
-  </div>
-</section>
-
-      <!-- Desktop nav -->
       <nav class="eg-nav" data-eg-nav>
         <a href="#core" class="eg-nav-link">Home</a>
+        <a href="#about" class="eg-nav-link">About HQ</a>
+        <a href="#signal-map" class="eg-nav-link">Signal Map</a>
+        <a href="#what-hq-does" class="eg-nav-link">What HQ Does</a>
 
         <div class="eg-nav-dropdown" data-eg-dropdown>
           <button
@@ -92,10 +65,14 @@
           </div>
         </div>
 
+        <a href="#contact" class="eg-nav-link">Contact</a>
 
+        <!-- Visible language option (wired in Step 3) -->
+        <button class="eg-nav-link eg-nav-pill" type="button" aria-label="Change language">
+          EN
+        </button>
       </nav>
 
-      <!-- Mobile toggle -->
       <button
         class="eg-nav-toggle"
         type="button"
@@ -110,451 +87,285 @@
   </header>
 
   <!-- =========================
-       MAIN SHELL
+       MAIN
   ========================== -->
   <main class="eg-shell">
+
+    <!-- =====================
+         HERO (Clean, No Globe Wiring Yet)
+         NOTE: We keep the globe container IDs for Step 2, but it will show the fallback image for now.
+    ====================== -->
+    <section id="core" class="hq-hero">
+      <div class="hq-hero-bg" aria-hidden="true">
+        <div id="globeViz" class="hq-globe"></div>
+        <img
+          id="globeFallback"
+          class="hq-globe-fallback"
+          src="assets/images/brand_atmosphere.png"
+          alt=""
+        />
+        <div class="hq-hero-vignette"></div>
+      </div>
+
+      <div class="eg-container hq-hero-inner">
+        <p class="hq-eyebrow">ECLIPSE GLOBAL HQ</p>
+
+        <h1 class="hq-title">Eclipse Global HQ</h1>
+        <p class="hq-subtitle">Central Command for the Eclipse Network</p>
+
+        <div class="hq-taglines">
+          <p>Quiet Command. Global Impact.</p>
+          <p>One Standard. One Network. Worldwide.</p>
+          <p>Innovation that ships. Infrastructure that holds.</p>
+        </div>
+
+        <div class="hq-actions">
+          <a class="eg-btn eg-btn-primary" href="#contact">Connect to HQ</a>
+          <a class="eg-btn eg-btn-ghost" href="#divisions">View Divisions</a>
+        </div>
+
+        <div class="hq-quickfacts" role="list" aria-label="HQ quick facts">
+          <div class="hq-fact" role="listitem">
+            <div class="hq-fact-label">Focus</div>
+            <div class="hq-fact-value">Structures that scale</div>
+          </div>
+          <div class="hq-fact" role="listitem">
+            <div class="hq-fact-label">Delivery</div>
+            <div class="hq-fact-value">Build → Validate → Deploy</div>
+          </div>
+          <div class="hq-fact" role="listitem">
+            <div class="hq-fact-label">Method</div>
+            <div class="hq-fact-value">The Lighthouse Method</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div class="eg-container">
 
       <!-- =====================
-           HERO – HQ CONSOLE
+           ABOUT / MISSION
       ====================== -->
-      <section id="core" class="eg-hero">
-        <div class="eg-hero-signal">
-          <span class="eg-hero-signal-dot"></span>
-          <span>LIVE SIGNAL</span>
-          <span class="eg-separator">•</span>
-          <span>CENTRAL COMMAND ONLINE</span>
-        </div>
+      <section id="about" class="eg-section">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">What Eclipse Global HQ is</h2>
+          <p class="eg-section-subtitle">
+            The innovation and infrastructure lab behind the Eclipse Network.
+          </p>
+        </header>
 
-        <div class="eg-hero-grid">
-          <!-- Left: Copy -->
-          <div class="eg-hero-copy">
-            <p class="eg-eyebrow">ECLIPSE GLOBAL HQ</p>
-            <h1 class="eg-hero-title">
-              Eclipse at the center.<br />
-              Every node in sync.<br />
-              Command you can feel.
-            </h1>
-
-            <p class="eg-hero-body">
-              Eclipse Global HQ is the command core for every Eclipse-connected company.
-              This is where intelligence, coordination, and digital infrastructure unify
-              to keep every node aligned — Transport, Properties, Interstate, Stateline,
-              and all future divisions.
-            </p>
-
-            <div class="eg-hero-tags">
-              <span class="eg-pill">No chaos freight</span>
-              <span class="eg-pill">Signal over noise</span>
-              <span class="eg-pill">Human-first routing</span>
-            </div>
-
-            <div class="eg-hero-actions">
-              <a href="#contact" class="eg-btn eg-btn-primary">
-                Connect to HQ
-              </a>
-              <a href="#console" class="eg-btn eg-btn-ghost">
-                View Command Console
-              </a>
-            </div>
-          </div>
-
-          <!-- Right: Command Snapshot -->
-          <aside class="eg-console">
-            <div class="eg-console-header">
-              <span class="eg-console-label">HQ COMMAND SNAPSHOT</span>
-              <span class="eg-console-status">
-                <span class="eg-status-dot"></span>
-                SYSTEM ONLINE
-              </span>
-            </div>
-
-            <div class="eg-console-grid">
-              <div class="eg-console-card">
-                <div class="eg-console-label">Signal layer</div>
-                <div class="eg-console-main">Routing • Exceptions</div>
-                <p class="eg-console-sub">No wandering freight. No dead comms.</p>
-              </div>
-
-              <div class="eg-console-card">
-                <div class="eg-console-label">Human layer</div>
-                <div class="eg-console-main">Clear rules • Direct language</div>
-                <p class="eg-console-sub">No passive-aggressive emails. No confusion.</p>
-              </div>
-
-              <div class="eg-console-card">
-                <div class="eg-console-label">Noise policy</div>
-                <div class="eg-console-main">Zero tolerated</div>
-                <p class="eg-console-sub">No ghosts. No “I thought.” Only clear moves.</p>
-              </div>
-
-              <div class="eg-console-card">
-                <div class="eg-console-label">HQ command view</div>
-                <div class="eg-console-main">Every node visible</div>
-                <p class="eg-console-sub">
-                  Transport, Properties, Interstate, Stateline, future nodes.
-                </p>
-              </div>
-            </div>
-
-            <div class="eg-console-footer">
-              <span class="eg-console-footer-label">CURRENT MODE</span>
-              <span class="eg-console-footer-value">
-                CALM • PRECISE • DECISIVE
-              </span>
-            </div>
-          </aside>
+        <div class="eg-prose">
+          <p>
+            <strong>Eclipse Global HQ is the innovation and infrastructure lab behind the Eclipse Network—built to design, test, and deploy structures that make execution faster, cleaner, and more transparent worldwide.</strong>
+          </p>
+          <p>
+            We prototype, validate, and deploy infrastructure, standards, and software—then hand proven playbooks to our divisions so they scale fast and stay aligned.
+          </p>
         </div>
       </section>
 
       <!-- =====================
-           BRAND ATMOSPHERE
+           WHAT HQ DOES (3 Pillars)
       ====================== -->
-      <!-- Brand Atmosphere Banner -->
-      <section class="eg-section eg-brand">
+      <section id="what-hq-does" class="eg-section">
         <header class="eg-section-header">
-          <h2 class="eg-section-title">The Eclipse horizon</h2>
+          <h2 class="eg-section-title">What HQ does</h2>
           <p class="eg-section-subtitle">
-            Where precision meets power. Where vision becomes infrastructure. Where worlds are built.
-          </p>
-        </header>
-        <a href="#core" class="eg-image-link">
-          <div class="eg-brand-inner">
-            <img
-              src="assets/images/brand_atmosphere.png"
-              alt="Eclipse Global HQ golden horizon and atmosphere artwork"
-              class="eg-img-full"
-            />
-          </div>
-        </a>
-      </section>
-
-      <!-- Division Logos Grid -->
-      <section class="eg-section eg-divisions">
-        <header class="eg-section-header">
-          <h2 class="eg-section-title">Eclipse divisions under HQ</h2>
-          <p class="eg-section-subtitle">
-            Each company holds its own story. HQ keeps the structure, standards, and signal aligned.
-          </p>
-        </header>
-        <a href="#divisions" class="eg-image-link">
-          <div class="eg-divisions-inner">
-            <img
-              src="assets/images/division_logos.png"
-              alt="Logos for Eclipse Global Logistics, Eclipse Transport, Stone &amp; Ember, and Eclipse Properties"
-              class="eg-img-full"
-            />
-          </div>
-        </a>
-      </section>
-
-      <!-- Command Interface Panel -->
-      <section class="eg-section eg-console-art">
-        <header class="eg-section-header">
-          <h2 class="eg-section-title">Command interface</h2>
-          <p class="eg-section-subtitle">
-            The way Eclipse Global HQ talks to the outside world — clear prompts, clear responses.
-          </p>
-        </header>
-        <a href="#console" class="eg-image-link">
-          <div class="eg-console-art-inner">
-            <img
-              src="assets/images/command_interface.png"
-              alt="Eclipse Global HQ command interface panel artwork"
-              class="eg-img-full"
-            />
-          </div>
-        </a>
-      </section>
-
-      <!-- Crest / Logo Pack Strip -->
-      <section class="eg-section eg-logo-pack">
-        <header class="eg-section-header">
-          <h2 class="eg-section-title">Signal of the kingdom</h2>
-          <p class="eg-section-subtitle">
-            The marks that carry Eclipse authority into every lane, yard, and property HQ touches.
-          </p>
-        </header>
-        <a href="#contact" class="eg-image-link">
-          <div class="eg-logo-pack-inner">
-            <img
-              src="assets/images/logo_pack.png"
-              alt="Eclipse Global HQ crest and logo elements"
-              class="eg-img-full"
-            />
-          </div>
-        </a>
-      </section>
-
-      <!-- ====================================
-           SECTION – “WHAT HQ ACTUALLY DOES”
-      ===================================== -->
-      <section class="eg-section" id="hq-roles">
-        <header class="eg-section-header">
-          <h2 class="eg-section-title">
-            What Eclipse Global HQ actually does
-          </h2>
-          <p class="eg-section-subtitle">
-            HQ is not another brand. It is the operating brain that keeps each Eclipse
-            company clean, aligned, and easy to work with — from the first email to the
-            last invoice.
+            HQ builds the structure—then multiplies it across the network.
           </p>
         </header>
 
         <div class="eg-section-grid">
           <article class="eg-card">
-            <h3 class="eg-card-title">01. Direction of the Kingdom</h3>
+            <h3 class="eg-card-title">Build the Structure</h3>
             <p class="eg-card-body">
-              Sets the non-negotiable standards for how we speak, respond, and execute.
-              HQ protects the culture: respect, clarity, and follow-through — no matter
-              which division someone touches.
+              Standards, governance, and operating design that turn complexity into clarity.
             </p>
           </article>
 
           <article class="eg-card">
-            <h3 class="eg-card-title">02. System Architecture</h3>
+            <h3 class="eg-card-title">Multiply the Method</h3>
             <p class="eg-card-body">
-              Chooses and maintains the digital stack: email, domains, routing,
-              automation, AI support, and security. One clean spine for every Eclipse
-              company to plug into.
+              Repeatable playbooks and tooling built to deploy across regions, divisions, and environments.
             </p>
           </article>
 
           <article class="eg-card">
-            <h3 class="eg-card-title">03. Live Command &amp; Review</h3>
+            <h3 class="eg-card-title">Accelerate Execution</h3>
             <p class="eg-card-body">
-              Holds the dashboards, playbooks, and reviews that keep operations from
-              drifting. If something breaks, HQ doesn’t panic — HQ adjusts the system
-              and locks in the fix.
+              Remove friction so divisions move faster—with transparency, accountability, and clean outcomes.
             </p>
           </article>
         </div>
       </section>
 
       <!-- =====================
-           DIVISION LOGO GRID
+           BUSINESS MODEL
       ====================== -->
-      <section class="eg-section eg-divisions">
-        <div class="eg-section-header">
-          <h2>Eclipse divisions under HQ</h2>
-          <p>Every company is a node. HQ keeps them aligned.</p>
-        </div>
-        <div class="eg-divisions-inner">
-          <img
-            src="assets/images/division_logos.png"
-            alt="Logos for Eclipse Global Logistics, Eclipse Transport, Stone &amp; Ember, Eclipse Properties"
-            class="eg-img-full"
-          />
+      <section id="business-model" class="eg-section">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">Business Model — Structures That Scale</h2>
+          <p class="eg-section-subtitle">
+            High-capability operating structure, built to deploy.
+          </p>
+        </header>
+
+        <div class="eg-prose">
+          <p>
+            <strong>HQ builds structures that scale—then equips Eclipse divisions and aligned organizations to execute with clarity through The Lighthouse Method.</strong>
+          </p>
+
+          <div class="eg-bullets">
+            <div class="eg-bullet">Architect → Validate → Deploy</div>
+            <div class="eg-bullet">Built once, deployed many times</div>
+            <div class="eg-bullet">Clarity you can operate</div>
+          </div>
         </div>
       </section>
 
-      <!-- ================================
-           SECTION – DIVISION LINKS
-      ================================= -->
+      <!-- =====================
+           THE LIGHTHOUSE METHOD
+      ====================== -->
+      <section id="lighthouse" class="eg-section">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">The Lighthouse Method</h2>
+          <p class="eg-section-subtitle">
+            Our way of building—human, disciplined, and durable.
+          </p>
+        </header>
+
+        <div class="eg-prose">
+          <p>
+            <strong>The Lighthouse Method is our way of building: clear standards, honest communication, and infrastructure that holds under pressure.</strong>
+          </p>
+        </div>
+      </section>
+
+      <!-- =====================
+           SIGNAL MAP (Public, Preview)
+      ====================== -->
+      <section id="signal-map" class="eg-section">
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">Global Signal Map</h2>
+          <p class="eg-section-subtitle">
+            A public view of movement and progress across the Eclipse Network—region-level only.
+          </p>
+        </header>
+
+        <div class="eg-signal-preview">
+          <div class="eg-signal-legend">
+            <span class="eg-chip eg-chip-active">Active</span>
+            <span class="eg-chip eg-chip-building">Building</span>
+            <span class="eg-chip eg-chip-planned">Planned</span>
+          </div>
+
+          <div class="eg-signal-note">
+            This preview becomes interactive in Step 2 (auto-rotate + hover), with Movement + Progress rules per division.
+          </div>
+
+          <a class="eg-btn eg-btn-ghost" href="dashboard.html">
+            Open full Signal Map view →
+          </a>
+        </div>
+      </section>
+
+      <!-- =====================
+           DIVISIONS (Locked Links Only)
+      ====================== -->
       <section id="divisions" class="eg-section">
         <header class="eg-section-header">
-          <h2 class="eg-section-title">Division command paths</h2>
+          <h2 class="eg-section-title">Divisions</h2>
           <p class="eg-section-subtitle">
-            Each company keeps its own personality. HQ keeps the structure, standards,
-            and signal the same.
+            Four live branches today. More nodes will appear here as they come online.
           </p>
         </header>
 
         <div class="eg-division-grid">
-          <!-- Transport -->
           <article class="eg-division-card">
-            <div class="eg-division-chip">Transport</div>
+            <div class="eg-division-chip">Logistics</div>
+            <h3 class="eg-division-title">Eclipse Global Logistics</h3>
+            <p class="eg-division-body">Global logistics backbone and command-aligned execution.</p>
+            <a class="eg-division-link" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">
+              Visit site →
+            </a>
+          </article>
+
+          <article class="eg-division-card">
+            <div class="eg-division-chip eg-division-chip--transport">Transport</div>
             <h3 class="eg-division-title">Eclipse Transport Co.</h3>
-            <p class="eg-division-body">
-              Dry-van and regional freight with disciplined communication, proactive
-              updates, and lanes that actually hold.
-            </p>
-            <a href="https://eclipsetransportco.com" class="eg-division-link">
-              Visit Transport node →
+            <p class="eg-division-body">Transport execution built on clarity, discipline, and predictable delivery.</p>
+            <a class="eg-division-link" href="https://eclipsetransportco.com" target="_blank" rel="noopener">
+              Visit site →
             </a>
           </article>
 
-          <!-- Properties -->
           <article class="eg-division-card">
-            <div class="eg-division-chip">Properties</div>
-            <h3 class="eg-division-title">Eclipse Properties / Stone &amp; Ember</h3>
-            <p class="eg-division-body">
-              Mixed-use properties, yards, and hubs built for freight, families, and
-              future expansion — not just square footage on paper.
-            </p>
-            <a href="#" class="eg-division-link">
-              Properties node (coming online) →
+            <div class="eg-division-chip eg-division-chip--ember">Stone &amp; Ember</div>
+            <h3 class="eg-division-title">Stone &amp; Ember</h3>
+            <p class="eg-division-body">Brand and build work aligned with infrastructure and long-term value.</p>
+            <a class="eg-division-link" href="https://stoneandemberco.com" target="_blank" rel="noopener">
+              Visit site →
             </a>
           </article>
 
-          <!-- Interstate / Stateline -->
           <article class="eg-division-card">
-            <div class="eg-division-chip">Interstate • Stateline</div>
-            <h3 class="eg-division-title">Long-range &amp; border lanes</h3>
-            <p class="eg-division-body">
-              Future arms of Eclipse for interstate and stateline freight — already
-              architected inside HQ so the moment they launch, they plug in clean.
-            </p>
-            <a href="#contact" class="eg-division-link">
-              Ask HQ about upcoming lanes →
+            <div class="eg-division-chip eg-division-chip--properties">Properties</div>
+            <h3 class="eg-division-title">Eclipse Properties Management</h3>
+            <p class="eg-division-body">Properties, hubs, and holdings designed to support growth.</p>
+            <a class="eg-division-link" href="https://eclipsepropertiesmanagement.com" target="_blank" rel="noopener">
+              Visit site →
             </a>
           </article>
         </div>
       </section>
 
       <!-- =====================
-           COMMAND INTERFACE ART
+           VISUALS (Use Your Existing Images, Cleanly)
       ====================== -->
-      <section class="eg-section eg-console-art">
-        <div class="eg-section-header">
-          <h2>Command interface</h2>
-          <p>Where Eclipse Global HQ speaks to the outside world.</p>
-        </div>
-        <div class="eg-console-art-inner">
-          <img
-            src="assets/images/command_interface.png"
-            alt="Eclipse Global HQ command interface panel"
-            class="eg-img-full"
-          />
-        </div>
-      </section>
-
-      <!-- =================================
-           SECTION – COMMAND CONSOLE TEXT
-      ================================== -->
-      <section id="console" class="eg-section eg-section--console">
+      <section class="eg-section">
         <header class="eg-section-header">
-          <h2 class="eg-section-title">Central Command • System Online</h2>
+          <h2 class="eg-section-title">Visual language</h2>
           <p class="eg-section-subtitle">
-            The language of HQ is closer to a command console than a brochure.
-            Clear prompts. Clear responses. No mystery.
+            Dark baseline. Single light source. Metallic authority. Division glow.
           </p>
         </header>
 
-        <div class="eg-console-text-grid">
-          <div class="eg-console-text-col">
-            <p class="eg-console-line">&gt; INITIALIZING: Eclipse Global HQ …</p>
-            <p class="eg-console-line">
-              &gt; NODES ONLINE: Transport • Interstate • Stateline • Properties
-            </p>
-            <p class="eg-console-line">
-              &gt; MODE: CALM • PRECISE • DECISIVE
-            </p>
-            <p class="eg-console-line">
-              &gt; HUMAN RULE: “No chaos. No confusion. Only clear moves.”
-            </p>
-          </div>
-          <div class="eg-console-text-col">
-            <p class="eg-console-note">
-              If a process creates fog, HQ rewrites it. If communication breaks, HQ
-              rewires it. Everyone plugged into Eclipse should feel one thing:
-              predictable, steady command.
-            </p>
-          </div>
+        <div class="eg-gallery">
+          <a class="eg-gallery-item" href="assets/images/brand_atmosphere.png" target="_blank" rel="noopener">
+            <img src="assets/images/brand_atmosphere.png" alt="Brand atmosphere" />
+            <div class="eg-gallery-caption">Atmosphere</div>
+          </a>
+
+          <a class="eg-gallery-item" href="assets/images/command_interface.png" target="_blank" rel="noopener">
+            <img src="assets/images/command_interface.png" alt="Command interface artwork" />
+            <div class="eg-gallery-caption">Command Interface</div>
+          </a>
+
+          <a class="eg-gallery-item" href="assets/images/division_logos.png" target="_blank" rel="noopener">
+            <img src="assets/images/division_logos.png" alt="Division insignias" />
+            <div class="eg-gallery-caption">Division Insignias</div>
+          </a>
         </div>
       </section>
 
       <!-- =====================
-           CREST / LOGO PACK
+           CONTACT (mailto only, locked)
       ====================== -->
-      <section class="eg-section eg-logo-pack">
-        <div class="eg-section-header">
-          <h2>Signal of the kingdom</h2>
-          <p>The marks that carry Eclipse authority into every lane and property.</p>
-        </div>
-        <div class="eg-logo-pack-inner">
-          <img
-            src="assets/images/logo_pack.png"
-            alt="Eclipse Global HQ crests and logo elements"
-            class="eg-img-full"
-          />
-        </div>
-      </section>
-
-      <!-- =========================
-           CONTACT / CTA
-      ========================== -->
       <section id="contact" class="eg-section eg-section--contact">
-        <div class="eg-contact-layout">
-          <div class="eg-contact-copy">
-            <h2 class="eg-section-title">Plug your world into Eclipse HQ</h2>
-            <p class="eg-section-subtitle">
-              Whether you’re a shipper, carrier, partner, or future division,
-              everything starts with one clear conversation with HQ.
-            </p>
+        <header class="eg-section-header">
+          <h2 class="eg-section-title">Connect to HQ</h2>
+          <p class="eg-section-subtitle">
+            Send what you’re building and what outcome you need. We’ll respond with the cleanest next step.
+          </p>
+        </header>
 
-            <div class="eg-contact-fallback">
-              <p class="eg-contact-small">
-                <span class="eg-contact-small-label">Public email:</span>
-                <a class="eg-contact-email" href="mailto:contact@eclipseglobalhq.com">contact@eclipseglobalhq.com</a>
-              </p>
-              <p class="eg-contact-small eg-contact-route-note">
-                Note: routes to <strong>admin@eclipsegloballogistics.com</strong> (Phase 1)
-              </p>
+        <div class="eg-contact-simple">
+          <div class="eg-contact-card">
+            <div class="eg-contact-label">Email</div>
+            <a class="eg-contact-email" href="mailto:contact@eclipseglobalhq.com">contact@eclipseglobalhq.com</a>
+            <div class="eg-contact-small">
+              Tip: include your role (shipper / carrier / partner / HQ) and your objective.
             </div>
-
-            <ul class="eg-contact-list">
-              <li>Aligned responses — no bouncing between brands</li>
-              <li>Clarity first, paperwork second</li>
-            </ul>
-          </div>
-
-          <div class="eg-contact-panel">
-            <h3 class="eg-contact-title">Signal HQ</h3>
-            <p class="eg-contact-note">
-              Send your route, your question, or your idea. HQ will respond with
-              next-step options — not vague promises.
-            </p>
-
-            <form id="hqLeadForm" class="eg-form" action="https://formspree.io/f/maqnwvko" method="POST">
-              <input type="hidden" name="_subject" value="HQ Lead — eclipseglobalhq.com" />
-              <input type="hidden" name="source" value="eclipseglobalhq.com/contact" />
-
-              <div class="eg-form-group">
-                <input type="text" id="fullName" name="fullName" placeholder="Full Name" required />
-              </div>
-
-              <div class="eg-form-group">
-                <input type="email" id="email" name="email" placeholder="Email Address" required />
-              </div>
-
-              <div class="eg-form-group">
-                <input type="text" id="phone" name="phone" placeholder="Phone Number" />
-              </div>
-
-              <div class="eg-form-group">
-                <input type="text" id="company" name="company" placeholder="Company (Optional)" />
-              </div>
-
-              <div class="eg-form-group">
-                <input type="text" id="needs" name="needs" placeholder="What do you need support in?" />
-              </div>
-
-              <div class="eg-form-group">
-                <select id="selectedNode" name="selectedNode">
-                  <option value="Global">Global</option>
-                  <option value="Transport">Transport</option>
-                  <option value="Freight">Freight</option>
-                  <option value="Commercial">Commercial</option>
-                  <option value="Residential">Residential</option>
-                  <option value="Interstate">Interstate</option>
-                  <option value="Stateline">Stateline</option>
-                </select>
-              </div>
-
-              <div class="eg-form-group">
-                <textarea id="notes" name="notes" placeholder="Your route / question / context"></textarea>
-              </div>
-
-              <button type="submit" class="eg-btn eg-btn-primary eg-btn-full">
-                Send to HQ
-              </button>
-
-              <p id="formStatus" class="eg-form-status" aria-live="polite"></p>
-              <p class="eg-contact-small eg-contact-fallback-link">
-                If you prefer email: <a class="eg-contact-email" href="mailto:contact@eclipseglobalhq.com">contact@eclipseglobalhq.com</a>
-              </p>
-            </form>
           </div>
         </div>
       </section>
@@ -576,15 +387,13 @@
           </div>
         </div>
         <p class="eg-footer-text">
-          Built as the quiet operating system for every Eclipse company.
+          Structures that scale. Innovation that ships. Infrastructure that holds.
         </p>
       </div>
 
       <div class="eg-footer-right">
         <p class="eg-footer-meta">
           <span>© <span data-eg-year></span> Eclipse Global HQ.</span>
-          <span class="eg-footer-dot">•</span>
-          <span>Central Command – System Online.</span>
         </p>
       </div>
     </div>

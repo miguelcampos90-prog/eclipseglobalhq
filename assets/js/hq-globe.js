@@ -5,7 +5,7 @@
   // CONFIG (Public-safe defaults)
   // =========================
   const CFG = {
-    // Keep this stable; make it absolute for safety.
+    // Stable absolute path
     dataPath: "/assets/data/public_signal_map.json",
 
     // Mobile fallback rule (Plan B)
@@ -20,6 +20,11 @@
     // Globe library CDN (no installs)
     globeCdn: "https://cdn.jsdelivr.net/npm/globe.gl@2.45.0/dist/globe.gl.min.js",
 
+    // Countries borders (CDN; minimal actions)
+    // If this ever fails, we’ll switch to local /assets/data/countries.geojson
+    countriesGeoJsonUrl:
+      "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json",
+
     // Render hardening: ensure the hero has height
     heroMinHeight: "70vh",
     heroMinHeightPx: 420,
@@ -31,7 +36,9 @@
       transport: "#2BBBAD",
       ember: "#D35B43",
       properties: "#E8A25B",
-      neutral: "rgba(255,255,255,0.75)"
+      neutral: "rgba(255,255,255,0.75)",
+      borders: "rgba(255,255,255,0.16)",
+      borderCap: "rgba(0,0,0,0)"
     }
   };
 
@@ -58,7 +65,6 @@
 
     const gv = $("globeViz");
     if (gv) {
-      // Force visible (your CSS currently sets opacity:0)
       gv.style.display = "block";
       gv.style.opacity = "1";
     }
@@ -106,19 +112,24 @@
     });
   }
 
-  async function fetchSignalMap() {
-    const res = await fetch(CFG.dataPath, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Signal map fetch failed: ${res.status}`);
+  async function fetchJson(urlOrPath) {
+    const res = await fetch(urlOrPath, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status} for ${urlOrPath}`);
     return res.json();
   }
 
+  async function fetchSignalMap() {
+    return fetchJson(CFG.dataPath);
+  }
+
+  async function fetchCountries() {
+    return fetchJson(CFG.countriesGeoJsonUrl);
+  }
+
   function normalizeSignalMap(data) {
-    // Accept multiple shapes without “inventing” a schema.
     let points = data?.points || data?.locations || data?.nodes || data?.hubs || [];
     let arcs = data?.arcs || data?.routes || data?.links || data?.flows || [];
-
     if (Array.isArray(data)) points = data;
-
     return {
       points: Array.isArray(points) ? points : [],
       arcs: Array.isArray(arcs) ? arcs : []
@@ -136,7 +147,6 @@
   }
 
   function regionOnly(obj) {
-    // Lock: region-level only. If no level field exists, we keep it.
     const lvl = (obj?.level || obj?.scope || obj?.tier || "").toString().toLowerCase().trim();
     if (!lvl) return true;
     return lvl.includes("region");
@@ -158,12 +168,10 @@
   function arcEndLng(a)   { return a?.endLng   ?? a?.toLng   ?? a?.toLon  ?? a?.dstLng ?? a?.dstLon ?? null; }
 
   function disableUserDrag(mount) {
-    // Lock: hover yes, drag no. Block pointerdown/drag/zoom.
     const canvas = mount.querySelector("canvas");
     if (!canvas) return;
 
     const block = (e) => {
-      // Allow hover/move; block actions that start interaction
       e.preventDefault();
       e.stopPropagation();
     };
@@ -187,7 +195,6 @@
       return;
     }
 
-    // Force visible early (prevents blank hero even during async load)
     showGlobe();
 
     try {
@@ -198,24 +205,32 @@
       return;
     }
 
-    // Reset mount
     mount.innerHTML = "";
     ensureHeroHeight();
     showGlobe();
 
-    // Create globe
     let globe;
     try {
       globe = window.Globe()(mount)
         .backgroundColor("rgba(0,0,0,0)")
         .showAtmosphere(true)
         .atmosphereAltitude(0.25)
+
+        // Countries layer (borders)
+        .polygonsData([])
+        .polygonCapColor(() => CFG.palette.borderCap)
+        .polygonSideColor(() => "rgba(0,0,0,0)")
+        .polygonStrokeColor(() => CFG.palette.borders)
+        .polygonAltitude(0.005)
+
+        // Points + arcs
         .pointLat((d) => d._lat)
         .pointLng((d) => d._lng)
         .pointColor((d) => d._color)
         .pointAltitude((d) => d._alt ?? 0.02)
         .pointRadius((d) => d._radius ?? 0.28)
         .pointLabel((d) => d._label || "")
+
         .arcStartLat((d) => d._startLat)
         .arcStartLng((d) => d._startLng)
         .arcEndLat((d) => d._endLat)
@@ -232,7 +247,6 @@
       return;
     }
 
-    // Controls: auto-rotate (locked); no pan/zoom; attempt to disable rotate.
     try {
       const controls = globe.controls();
       if (controls) {
@@ -240,11 +254,10 @@
         controls.autoRotateSpeed = CFG.autoRotateSpeed;
         controls.enablePan = false;
         controls.enableZoom = false;
-        controls.enableRotate = false; // Some versions still allow drag; we also block pointerdown on canvas.
+        controls.enableRotate = false;
       }
     } catch (_) {}
 
-    // Size / resize
     const resize = () => {
       ensureHeroHeight();
       const r = mount.getBoundingClientRect();
@@ -256,10 +269,18 @@
     window.addEventListener("resize", resize);
     resize();
 
-    // Disable drag after canvas exists
     setTimeout(() => disableUserDrag(mount), 0);
 
-    // Load signal map (but do NOT fail blank if it errors)
+    // Load countries borders (non-fatal)
+    try {
+      const world = await fetchCountries();
+      const features = Array.isArray(world?.features) ? world.features : [];
+      globe.polygonsData(features);
+    } catch (err) {
+      console.warn("[ECLIPSE] Countries layer failed; continuing without borders.", err);
+    }
+
+    // Load signal map (non-fatal)
     let points = [];
     let arcs = [];
     try {
@@ -271,7 +292,6 @@
       console.warn("[ECLIPSE] Signal map load failed; rendering globe without points/arcs.", err);
     }
 
-    // Normalize points (region-level only)
     const pointsData = (points || [])
       .filter(regionOnly)
       .map((p) => {
@@ -288,10 +308,6 @@
           p?.title ||
           `${(p?.division || p?.type || "Node").toString()}`;
 
-        // Highlight rules (locked intent). Data-driven when possible.
-        // HQ persistent: always colored HQ when division indicates HQ.
-        // Transport temp window: if data provides "monthsAgo" or "ageMonths", gate; else allow.
-        // Properties persistent if owned: if owned flag exists, gate; else allow.
         let keep = true;
         if (divKey === "transport") {
           const age = p?.monthsAgo ?? p?.ageMonths ?? null;
@@ -318,7 +334,6 @@
       })
       .filter(Boolean);
 
-    // Normalize arcs
     const arcsData = (arcs || [])
       .map((a) => {
         const sLat = arcStartLat(a);
@@ -343,16 +358,13 @@
       })
       .filter(Boolean);
 
-    // Apply data to globe (even if empty)
     globe.pointsData(pointsData);
     globe.arcsData(arcsData);
 
-    // Final visibility assert
     ensureHeroHeight();
     showGlobe();
   }
 
-  // Boot
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init, { once: true });
   } else {

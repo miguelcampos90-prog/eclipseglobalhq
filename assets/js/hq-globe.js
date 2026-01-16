@@ -5,7 +5,8 @@
   // CONFIG (Public-safe defaults)
   // =========================
   const CFG = {
-    dataPath: "assets/data/public_signal_map.json",
+    // Keep this stable; make it absolute for safety.
+    dataPath: "/assets/data/public_signal_map.json",
 
     // Mobile fallback rule (Plan B)
     mobileMaxWidth: 768,
@@ -13,23 +14,54 @@
     // Auto-rotate + hover (locked)
     autoRotateSpeed: 0.35,
 
-    // Transport rolling window (locked concept; data can optionally include timestamps)
-    transportRollingMonths: 6, // (you said 3–6 months; default to 6; we can tune per point later)
+    // Transport rolling window (locked concept; defaults to 6)
+    transportRollingMonths: 6,
 
     // Globe library CDN (no installs)
-    globeCdn:
-      "https://cdn.jsdelivr.net/npm/globe.gl@2.45.0/dist/globe.gl.min.js",
+    globeCdn: "https://cdn.jsdelivr.net/npm/globe.gl@2.45.0/dist/globe.gl.min.js",
+
+    // Render hardening: ensure the hero has height
+    heroMinHeight: "70vh",
+    heroMinHeightPx: 420,
+
+    // Palette locks
+    palette: {
+      hq: "#3D84F5",
+      logistics: "#6A8DFF",
+      transport: "#2BBBAD",
+      ember: "#D35B43",
+      properties: "#E8A25B",
+      neutral: "rgba(255,255,255,0.75)"
+    }
   };
 
   // =========================
   // Helpers
   // =========================
+  const $ = (id) => document.getElementById(id);
+
   function isMobile() {
     return window.matchMedia && window.matchMedia(`(max-width: ${CFG.mobileMaxWidth}px)`).matches;
   }
 
-  function $(id) {
-    return document.getElementById(id);
+  function ensureHeroHeight() {
+    const hero =
+      document.querySelector("section#home.hero-globe") ||
+      document.querySelector("section.hero-globe") ||
+      document.querySelector("#home.hero-globe") ||
+      document.querySelector(".hero-globe");
+
+    if (hero) {
+      const h = hero.getBoundingClientRect().height;
+      if (h < CFG.heroMinHeightPx) hero.style.minHeight = CFG.heroMinHeight;
+    }
+
+    const gv = $("globeViz");
+    if (gv) {
+      // Force visible (your CSS currently sets opacity:0)
+      gv.style.display = "block";
+      gv.style.opacity = "1";
+    }
   }
 
   function showFallbackOnly() {
@@ -52,195 +84,93 @@
     }
   }
 
-  function escapeHtml(str) {
-    return String(str || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function parseDateMaybe(v) {
-    if (!v) return null;
-    const d = new Date(v);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-
-  function withinRollingMonths(date, months) {
-    if (!date) return true; // if no date, keep it (public safe default)
-    const now = new Date();
-    const cutoff = new Date(now);
-    cutoff.setMonth(cutoff.getMonth() - months);
-    return date >= cutoff;
-  }
-
-  function normalizeStatus(status) {
-    const s = String(status || "").toLowerCase().trim();
-    if (s === "active" || s === "building" || s === "planned") return s;
-    // allow legacy or alternate words
-    if (s === "live") return "active";
-    if (s === "planning") return "planned";
-    return "planned";
-  }
-
-  function normalizeType(type) {
-    const t = String(type || "").toLowerCase().trim();
-    // preferred types: hq, transport, logistics, properties, innovation
-    if (!t) return "network";
-    return t;
-  }
-
-  // Progress colors (public safe)
-  function colorByStatus(status) {
-    switch (normalizeStatus(status)) {
-      case "active":
-        return "rgba(61,132,245,0.95)"; // HQ blue
-      case "building":
-        return "rgba(43,187,173,0.90)"; // transport teal
-      case "planned":
-      default:
-        return "rgba(232,162,91,0.85)"; // properties gold (planned tone)
-    }
-  }
-
-  // =========================
-  // Data rules (Movement + Progress, division behavior)
-  // =========================
-  function shouldDisplayPoint(p) {
-    const type = normalizeType(p.type);
-    const status = normalizeStatus(p.status);
-
-    // Region-level only is enforced by what you put into JSON (we won’t add precision here).
-    // Now apply persistence/rolling logic:
-
-    // HQ (and innovation labs) are persistent highlights
-    if (type === "hq" || type === "innovation" || type === "labs") return true;
-
-    // Properties: highlight if owned; if not provided, allow it (so we don't hide everything by accident)
-    if (type === "properties") {
-      if (typeof p.owned === "boolean") return p.owned === true || status !== "active";
-      return true;
-    }
-
-    // Transport: rolling 3–6 month log (use lastActive/updatedAt if present)
-    if (type === "transport") {
-      const d = parseDateMaybe(p.lastActive || p.updatedAt || p.date);
-      return withinRollingMonths(d, CFG.transportRollingMonths);
-    }
-
-    // Logistics: not explicitly locked, but safe to treat similar to transport (rolling window) if date exists
-    if (type === "logistics") {
-      const d = parseDateMaybe(p.lastActive || p.updatedAt || p.date);
-      return withinRollingMonths(d, CFG.transportRollingMonths);
-    }
-
-    // Default: show
-    return true;
-  }
-
-  function shouldDisplayArc(a) {
-    const type = normalizeType(a.type);
-    const d = parseDateMaybe(a.lastActive || a.updatedAt || a.date);
-
-    if (type === "hq" || type === "innovation" || type === "labs") return true;
-    if (type === "properties") {
-      if (typeof a.owned === "boolean") return a.owned === true;
-      return true;
-    }
-    if (type === "transport" || type === "logistics") {
-      return withinRollingMonths(d, CFG.transportRollingMonths);
-    }
-    return true;
-  }
-
-  // =========================
-  // Texture: generate a simple “eclipse-style” globe texture in-code
-  // (No missing assets, no downloads)
-  // =========================
-  function makeEclipseTextureDataUrl() {
-    const w = 1024;
-    const h = 512;
-    const c = document.createElement("canvas");
-    c.width = w;
-    c.height = h;
-    const ctx = c.getContext("2d");
-
-    // Base gradient (deep space)
-    const g = ctx.createLinearGradient(0, 0, w, h);
-    g.addColorStop(0, "#0b1320");
-    g.addColorStop(0.5, "#070b14");
-    g.addColorStop(1, "#050712");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-
-    // “Top-right illumination”
-    const glow = ctx.createRadialGradient(w * 0.78, h * 0.22, 10, w * 0.78, h * 0.22, w * 0.65);
-    glow.addColorStop(0, "rgba(61,132,245,0.35)");
-    glow.addColorStop(0.5, "rgba(61,132,245,0.12)");
-    glow.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, w, h);
-
-    // Subtle latitude/longitude lines
-    ctx.globalAlpha = 0.10;
-    ctx.strokeStyle = "rgba(255,255,255,0.35)";
-    for (let y = 32; y < h; y += 48) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-    }
-    for (let x = 64; x < w; x += 96) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-
-    // Noise grain
-    const img = ctx.getImageData(0, 0, w, h);
-    for (let i = 0; i < img.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 18; // small noise
-      img.data[i] = Math.min(255, Math.max(0, img.data[i] + n));
-      img.data[i + 1] = Math.min(255, Math.max(0, img.data[i + 1] + n));
-      img.data[i + 2] = Math.min(255, Math.max(0, img.data[i + 2] + n));
-    }
-    ctx.putImageData(img, 0, 0);
-
-    return c.toDataURL("image/jpeg", 0.85);
-  }
-
-  // =========================
-  // Load Globe library (CDN) if needed
-  // =========================
   function loadGlobeLib() {
     return new Promise((resolve, reject) => {
-      if (typeof window.Globe === "function") return resolve();
+      if (window.Globe) return resolve(true);
 
-      // Avoid double-injecting
-      const existing = document.querySelector(`script[data-eg-globe="1"]`);
+      const existing = document.querySelector('script[data-eclipse-globe-lib="1"]');
       if (existing) {
-        existing.addEventListener("load", () => resolve());
-        existing.addEventListener("error", () => reject(new Error("Globe CDN failed")));
+        existing.addEventListener("load", () => resolve(true), { once: true });
+        existing.addEventListener("error", () => reject(new Error("globe.gl CDN blocked")), { once: true });
         return;
       }
 
       const s = document.createElement("script");
       s.src = CFG.globeCdn;
       s.async = true;
-      s.setAttribute("data-eg-globe", "1");
-      s.addEventListener("load", () => resolve());
-      s.addEventListener("error", () => reject(new Error("Globe CDN failed")));
+      s.defer = true;
+      s.setAttribute("data-eclipse-globe-lib", "1");
+      s.onload = () => resolve(true);
+      s.onerror = () => reject(new Error("Failed to load globe.gl CDN"));
       document.head.appendChild(s);
     });
   }
 
-  async function loadSignalData() {
+  async function fetchSignalMap() {
     const res = await fetch(CFG.dataPath, { cache: "no-store" });
     if (!res.ok) throw new Error(`Signal map fetch failed: ${res.status}`);
     return res.json();
+  }
+
+  function normalizeSignalMap(data) {
+    // Accept multiple shapes without “inventing” a schema.
+    let points = data?.points || data?.locations || data?.nodes || data?.hubs || [];
+    let arcs = data?.arcs || data?.routes || data?.links || data?.flows || [];
+
+    if (Array.isArray(data)) points = data;
+
+    return {
+      points: Array.isArray(points) ? points : [],
+      arcs: Array.isArray(arcs) ? arcs : []
+    };
+  }
+
+  function pickDivisionKey(obj) {
+    const raw = (obj?.division || obj?.node || obj?.type || obj?.category || "").toString().toLowerCase();
+    if (raw.includes("hq")) return "hq";
+    if (raw.includes("logistics")) return "logistics";
+    if (raw.includes("transport")) return "transport";
+    if (raw.includes("stone") || raw.includes("ember")) return "ember";
+    if (raw.includes("properties")) return "properties";
+    return "neutral";
+  }
+
+  function regionOnly(obj) {
+    // Lock: region-level only. If no level field exists, we keep it.
+    const lvl = (obj?.level || obj?.scope || obj?.tier || "").toString().toLowerCase().trim();
+    if (!lvl) return true;
+    return lvl.includes("region");
+  }
+
+  function toLat(obj) {
+    const v = obj?.lat ?? obj?.latitude ?? obj?.y;
+    return typeof v === "number" ? v : null;
+  }
+
+  function toLng(obj) {
+    const v = obj?.lng ?? obj?.lon ?? obj?.longitude ?? obj?.x;
+    return typeof v === "number" ? v : null;
+  }
+
+  function arcStartLat(a) { return a?.startLat ?? a?.fromLat ?? a?.srcLat ?? null; }
+  function arcStartLng(a) { return a?.startLng ?? a?.fromLng ?? a?.fromLon ?? a?.srcLng ?? a?.srcLon ?? null; }
+  function arcEndLat(a)   { return a?.endLat   ?? a?.toLat   ?? a?.dstLat ?? null; }
+  function arcEndLng(a)   { return a?.endLng   ?? a?.toLng   ?? a?.toLon  ?? a?.dstLng ?? a?.dstLon ?? null; }
+
+  function disableUserDrag(mount) {
+    // Lock: hover yes, drag no. Block pointerdown/drag/zoom.
+    const canvas = mount.querySelector("canvas");
+    if (!canvas) return;
+
+    const block = (e) => {
+      // Allow hover/move; block actions that start interaction
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    ["pointerdown", "mousedown", "touchstart", "wheel"].forEach((evt) => {
+      canvas.addEventListener(evt, block, { passive: false });
+    });
   }
 
   // =========================
@@ -250,110 +180,182 @@
     const mount = $("globeViz");
     if (!mount) return;
 
-    // Mobile: fallback only (Plan B)
+    ensureHeroHeight();
+
     if (isMobile()) {
       showFallbackOnly();
       return;
     }
 
-    // Load globe library dynamically (no HTML edits required)
-    await loadGlobeLib();
+    // Force visible early (prevents blank hero even during async load)
+    showGlobe();
 
-    // If Globe still not available, fallback
-    if (typeof window.Globe !== "function") {
+    try {
+      await loadGlobeLib();
+    } catch (err) {
+      console.error("[ECLIPSE] Globe lib load failed:", err);
       showFallbackOnly();
       return;
     }
 
-    const raw = await loadSignalData();
-    const pointsRaw = Array.isArray(raw.points) ? raw.points : [];
-    const arcsRaw = Array.isArray(raw.arcs) ? raw.arcs : [];
-
-    // Apply public rules
-    const points = pointsRaw.filter(shouldDisplayPoint).map((p) => ({
-      ...p,
-      type: normalizeType(p.type),
-      status: normalizeStatus(p.status),
-    }));
-
-    const arcs = arcsRaw.filter(shouldDisplayArc).map((a) => ({
-      ...a,
-      type: normalizeType(a.type),
-      status: normalizeStatus(a.status),
-    }));
-
-    // Show globe (hide fallback)
+    // Reset mount
+    mount.innerHTML = "";
+    ensureHeroHeight();
     showGlobe();
 
-    // Transparent background so CSS/hero background shows through
-    const globe = window.Globe()(mount)
-      .backgroundColor("rgba(0,0,0,0)")
-      .globeImageUrl(makeEclipseTextureDataUrl())
-      .showAtmosphere(true)
-      .atmosphereColor("rgba(61,132,245,0.22)")
-      .atmosphereAltitude(0.20)
-
-      // Points = progress
-      .pointsData(points)
-      .pointLat((d) => d.lat)
-      .pointLng((d) => d.lng)
-      .pointColor((d) => colorByStatus(d.status))
-      .pointAltitude((d) => (d.status === "active" ? 0.045 : 0.028))
-      .pointRadius((d) => (d.status === "active" ? 0.25 : 0.18))
-      .pointsMerge(true)
-      .pointLabel((d) => {
-        const label = escapeHtml(d.label || d.region || "Region");
-        const type = escapeHtml(String(d.type || "node").toUpperCase());
-        const status = escapeHtml(String(d.status || "planned").toUpperCase());
-        return `
-          <div style="padding:8px 10px; max-width:220px;">
-            <div style="font-weight:800; letter-spacing:0.02em;">${label}</div>
-            <div style="opacity:0.85; font-size:12px; margin-top:2px;">${type} • ${status}</div>
-          </div>
-        `;
-      })
-
-      // Arcs = movement
-      .arcsData(arcs)
-      .arcStartLat((d) => d.startLat)
-      .arcStartLng((d) => d.startLng)
-      .arcEndLat((d) => d.endLat)
-      .arcEndLng((d) => d.endLng)
-      .arcColor((d) => [colorByStatus(d.status), "rgba(255,255,255,0.05)"])
-      .arcAltitudeAutoScale(0.30)
-      .arcDashLength(0.45)
-      .arcDashGap(2.2)
-      .arcDashAnimateTime(2200);
-
-    // Camera baseline
-    globe.pointOfView({ lat: 18, lng: 0, altitude: 2.25 }, 0);
-
-    // Auto rotate only (no user drag)
-    const controls = globe.controls();
-    if (controls) {
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = CFG.autoRotateSpeed;
-
-      // Disable manual interaction (auto-rotate + hover)
-      controls.enableRotate = false;
-      controls.enableZoom = false;
-      controls.enablePan = false;
+    // Create globe
+    let globe;
+    try {
+      globe = window.Globe()(mount)
+        .backgroundColor("rgba(0,0,0,0)")
+        .showAtmosphere(true)
+        .atmosphereAltitude(0.25)
+        .pointLat((d) => d._lat)
+        .pointLng((d) => d._lng)
+        .pointColor((d) => d._color)
+        .pointAltitude((d) => d._alt ?? 0.02)
+        .pointRadius((d) => d._radius ?? 0.28)
+        .pointLabel((d) => d._label || "")
+        .arcStartLat((d) => d._startLat)
+        .arcStartLng((d) => d._startLng)
+        .arcEndLat((d) => d._endLat)
+        .arcEndLng((d) => d._endLng)
+        .arcColor((d) => d._color)
+        .arcAltitude((d) => d._alt ?? 0.25)
+        .arcStroke((d) => d._stroke ?? 0.6)
+        .arcDashLength(0.55)
+        .arcDashGap(1.0)
+        .arcDashAnimateTime(2500);
+    } catch (err) {
+      console.error("[ECLIPSE] Globe init failed:", err);
+      showFallbackOnly();
+      return;
     }
 
-    // Resize safety (if viewport becomes mobile, drop to fallback)
-    window.addEventListener(
-      "resize",
-      () => {
-        if (isMobile()) showFallbackOnly();
-      },
-      { passive: true }
-    );
+    // Controls: auto-rotate (locked); no pan/zoom; attempt to disable rotate.
+    try {
+      const controls = globe.controls();
+      if (controls) {
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = CFG.autoRotateSpeed;
+        controls.enablePan = false;
+        controls.enableZoom = false;
+        controls.enableRotate = false; // Some versions still allow drag; we also block pointerdown on canvas.
+      }
+    } catch (_) {}
+
+    // Size / resize
+    const resize = () => {
+      ensureHeroHeight();
+      const r = mount.getBoundingClientRect();
+      const w = Math.max(320, Math.floor(r.width));
+      const h = Math.max(320, Math.floor(r.height));
+      if (globe.width) globe.width(w);
+      if (globe.height) globe.height(h);
+    };
+    window.addEventListener("resize", resize);
+    resize();
+
+    // Disable drag after canvas exists
+    setTimeout(() => disableUserDrag(mount), 0);
+
+    // Load signal map (but do NOT fail blank if it errors)
+    let points = [];
+    let arcs = [];
+    try {
+      const raw = await fetchSignalMap();
+      const norm = normalizeSignalMap(raw);
+      points = norm.points;
+      arcs = norm.arcs;
+    } catch (err) {
+      console.warn("[ECLIPSE] Signal map load failed; rendering globe without points/arcs.", err);
+    }
+
+    // Normalize points (region-level only)
+    const pointsData = (points || [])
+      .filter(regionOnly)
+      .map((p) => {
+        const lat = toLat(p);
+        const lng = toLng(p);
+        if (lat == null || lng == null) return null;
+
+        const divKey = pickDivisionKey(p);
+        const color = CFG.palette[divKey] || CFG.palette.neutral;
+
+        const label =
+          p?.label ||
+          p?.name ||
+          p?.title ||
+          `${(p?.division || p?.type || "Node").toString()}`;
+
+        // Highlight rules (locked intent). Data-driven when possible.
+        // HQ persistent: always colored HQ when division indicates HQ.
+        // Transport temp window: if data provides "monthsAgo" or "ageMonths", gate; else allow.
+        // Properties persistent if owned: if owned flag exists, gate; else allow.
+        let keep = true;
+        if (divKey === "transport") {
+          const age = p?.monthsAgo ?? p?.ageMonths ?? null;
+          if (typeof age === "number") keep = age <= CFG.transportRollingMonths;
+        }
+        if (divKey === "properties") {
+          if (typeof p?.owned === "boolean") keep = p.owned === true;
+          if (typeof p?.isOwned === "boolean") keep = p.isOwned === true;
+          if (typeof p?.status === "string") {
+            const s = p.status.toLowerCase();
+            if (s.includes("owned") === false) keep = false;
+          }
+        }
+        if (!keep) return null;
+
+        return {
+          ...p,
+          _lat: lat,
+          _lng: lng,
+          _color: color,
+          _label: label,
+          _radius: 0.28
+        };
+      })
+      .filter(Boolean);
+
+    // Normalize arcs
+    const arcsData = (arcs || [])
+      .map((a) => {
+        const sLat = arcStartLat(a);
+        const sLng = arcStartLng(a);
+        const eLat = arcEndLat(a);
+        const eLng = arcEndLng(a);
+        if ([sLat, sLng, eLat, eLng].some((v) => typeof v !== "number")) return null;
+
+        const divKey = pickDivisionKey(a);
+        const color = CFG.palette[divKey] || "rgba(255,255,255,0.35)";
+
+        return {
+          ...a,
+          _startLat: sLat,
+          _startLng: sLng,
+          _endLat: eLat,
+          _endLng: eLng,
+          _color: color,
+          _alt: a?.altitude ?? 0.25,
+          _stroke: a?.stroke ?? 0.6
+        };
+      })
+      .filter(Boolean);
+
+    // Apply data to globe (even if empty)
+    globe.pointsData(pointsData);
+    globe.arcsData(arcsData);
+
+    // Final visibility assert
+    ensureHeroHeight();
+    showGlobe();
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    init().catch((err) => {
-      console.error("[HQ Globe] init failed:", err);
-      showFallbackOnly();
-    });
-  });
+  // Boot
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
 })();

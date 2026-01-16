@@ -1,150 +1,274 @@
-document.addEventListener("DOMContentLoaded", function () {
-  initMobileNav();
-  initNavDropdowns();
-  initSmoothScroll();
-  initCurrentYear();
-  initContactForm();
-});
+/* Eclipse Global HQ - main.js
+   Purpose:
+   - Auto-load hq-globe.js when #globeViz exists (fixes globe not rendering)
+   - Nav: Divisions dropdown open/close + click-outside + ESC
+   - Nav: Mobile menu toggle open/close
+   - Footer: auto-set current year
+   - Hooks (inactive by default): theme + language (for later Mini Lucien + light mode)
+*/
+(() => {
+  'use strict';
 
-function initMobileNav() {
-  const toggle = document.querySelector("[data-eg-nav-toggle]");
-  const nav = document.querySelector("[data-eg-nav]");
+  const CONFIG = {
+    globeScriptSrc: '/assets/js/hq-globe.js',
+    globeScriptId: 'eclipse-hq-globe-script',
+    debug: false,
+    storage: {
+      theme: 'eclipse_theme',     // later
+      language: 'eclipse_lang',   // later
+    },
+    classes: {
+      dropdownOpen: 'is-open',
+      mobileNavOpen: 'is-open',
+      bodyNavOpen: 'nav-open',
+      themeLight: 'theme-light',
+      themeDark: 'theme-dark',
+    },
+  };
 
-  if (!toggle || !nav) return;
+  // ---------------------------
+  // Utilities
+  // ---------------------------
+  const log = (...args) => { if (CONFIG.debug) console.log('[ECLIPSE]', ...args); };
 
-  const ACTIVE_CLASS = "eg-nav--open";
-
-  toggle.addEventListener("click", () => {
-    const isOpen = nav.classList.toggle(ACTIVE_CLASS);
-    toggle.setAttribute("aria-expanded", String(isOpen));
-  });
-
-  nav.addEventListener("click", (event) => {
-    // Close mobile nav when a link is clicked (dropdown toggle is a button, so it won't trigger)
-    if (event.target.matches("a") && nav.classList.contains(ACTIVE_CLASS)) {
-      nav.classList.remove(ACTIVE_CLASS);
-      toggle.setAttribute("aria-expanded", "false");
+  const onReady = (fn) => {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn, { once: true });
+    } else {
+      fn();
     }
-  });
-}
+  };
 
-function initNavDropdowns() {
-  const dropdowns = Array.from(document.querySelectorAll("[data-eg-dropdown]"));
-  if (dropdowns.length === 0) return;
+  const qs = (sel, root = document) => root.querySelector(sel);
+  const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  function closeAll(exceptEl) {
-    dropdowns.forEach((dd) => {
-      if (exceptEl && dd === exceptEl) return;
-      dd.classList.remove("eg-dropdown--open");
-      const btn = dd.querySelector("[data-eg-dropdown-toggle]");
-      if (btn) btn.setAttribute("aria-expanded", "false");
+  const safeAddEvent = (el, evt, handler, opts) => {
+    if (!el) return;
+    el.addEventListener(evt, handler, opts);
+  };
+
+  const setAriaExpanded = (btn, expanded) => {
+    if (!btn) return;
+    btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  };
+
+  const isVisible = (el) => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+
+  const loadScriptOnce = (src, id) => {
+    return new Promise((resolve, reject) => {
+      // Already loaded by id?
+      if (id && document.getElementById(id)) {
+        resolve(true);
+        return;
+      }
+      // Already loaded by src?
+      const existing = qsa('script').find(s => (s.src || '').includes(src));
+      if (existing) {
+        resolve(true);
+        return;
+      }
+
+      const s = document.createElement('script');
+      if (id) s.id = id;
+      s.src = src;
+      s.defer = true;
+      s.onload = () => resolve(true);
+      s.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+      document.head.appendChild(s);
     });
-  }
+  };
 
-  dropdowns.forEach((dd) => {
-    const toggle = dd.querySelector("[data-eg-dropdown-toggle]");
-    const menu = dd.querySelector("[data-eg-dropdown-menu]");
+  // ---------------------------
+  // 1) Globe autoloader
+  // ---------------------------
+  const initGlobeAutoload = () => {
+    const globeMount = document.getElementById('globeViz');
+    if (!globeMount) return;
+
+    log('Found #globeViz, loading hq-globe.js...');
+    loadScriptOnce(CONFIG.globeScriptSrc, CONFIG.globeScriptId)
+      .then(() => log('hq-globe.js loaded'))
+      .catch((err) => {
+        console.error('[ECLIPSE] Globe load failed:', err);
+      });
+  };
+
+  // ---------------------------
+  // 2) Divisions dropdown (desktop nav)
+  // ---------------------------
+  const initDivisionsDropdown = () => {
+    // Try several selector patterns (robust to HTML differences)
+    const toggle =
+      qs('[data-dropdown-toggle="divisions"]') ||
+      qs('#divisionsToggle') ||
+      qs('#divisions-toggle') ||
+      qs('.divisions-toggle') ||
+      qs('[aria-controls="divisionsMenu"]');
+
+    const menu =
+      qs('[data-dropdown-menu="divisions"]') ||
+      qs('#divisionsMenu') ||
+      qs('#divisions-menu') ||
+      qs('.divisions-menu');
+
     if (!toggle || !menu) return;
 
-    toggle.addEventListener("click", (e) => {
-      e.preventDefault();
-      const isOpen = dd.classList.toggle("eg-dropdown--open");
-      toggle.setAttribute("aria-expanded", String(isOpen));
-      if (isOpen) closeAll(dd);
-    });
+    // Ensure menu has an id if toggle uses aria-controls later
+    if (!menu.id) menu.id = 'divisionsMenu';
 
-    // Close on menu item click
-    menu.addEventListener("click", (e) => {
-      if (e.target.matches("a")) {
-        dd.classList.remove("eg-dropdown--open");
-        toggle.setAttribute("aria-expanded", "false");
-      }
-    });
-  });
-
-  // Close on outside click
-  document.addEventListener("click", (e) => {
-    const clickedInside = dropdowns.some((dd) => dd.contains(e.target));
-    if (!clickedInside) closeAll();
-  });
-
-  // Close on Escape
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeAll();
-  });
-}
-
-function initSmoothScroll() {
-  const links = document.querySelectorAll('a[href^="#"]');
-
-  links.forEach((link) => {
-    link.addEventListener("click", (event) => {
-      const href = link.getAttribute("href");
-      if (!href || href === "#" || !href.startsWith("#")) return;
-
-      const target = document.getElementById(href.slice(1));
-      if (!target) return;
-
-      event.preventDefault();
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
-}
-
-function initCurrentYear() {
-  const yearSpans = document.querySelectorAll("[data-eg-year]");
-  const year = new Date().getFullYear();
-  yearSpans.forEach((span) => (span.textContent = year));
-}
-
-function initContactForm() {
-  const form = document.getElementById("hqLeadForm");
-  const statusEl = document.getElementById("formStatus");
-
-  if (!form || !statusEl) return;
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalBtnText = submitBtn ? submitBtn.textContent : "";
-
-    const setStatus = (text) => {
-      statusEl.textContent = text;
+    const open = () => {
+      menu.classList.add(CONFIG.classes.dropdownOpen);
+      setAriaExpanded(toggle, true);
     };
 
-    setStatus("Sending…");
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Sending…";
+    const close = () => {
+      menu.classList.remove(CONFIG.classes.dropdownOpen);
+      setAriaExpanded(toggle, false);
+    };
+
+    const isOpen = () => menu.classList.contains(CONFIG.classes.dropdownOpen);
+
+    // Click toggle
+    safeAddEvent(toggle, 'click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isOpen() ? close() : open();
+    });
+
+    // Click outside closes
+    safeAddEvent(document, 'click', (e) => {
+      if (!isOpen()) return;
+      const t = e.target;
+      if (menu.contains(t) || toggle.contains(t)) return;
+      close();
+    });
+
+    // ESC closes
+    safeAddEvent(document, 'keydown', (e) => {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') close();
+    });
+
+    // If menu links are clicked, close (nice UX)
+    qsa('a', menu).forEach((a) => {
+      safeAddEvent(a, 'click', () => close());
+    });
+  };
+
+  // ---------------------------
+  // 3) Mobile nav toggle
+  // ---------------------------
+  const initMobileNav = () => {
+    const toggle =
+      qs('[data-mobile-nav-toggle]') ||
+      qs('#mobileNavToggle') ||
+      qs('#navToggle') ||
+      qs('.nav-toggle') ||
+      qs('.hamburger');
+
+    const nav =
+      qs('[data-mobile-nav]') ||
+      qs('#mobileNav') ||
+      qs('#navMenu') ||
+      qs('.mobile-nav') ||
+      qs('.nav-links');
+
+    if (!toggle || !nav) return;
+
+    const open = () => {
+      nav.classList.add(CONFIG.classes.mobileNavOpen);
+      document.body.classList.add(CONFIG.classes.bodyNavOpen);
+      setAriaExpanded(toggle, true);
+    };
+
+    const close = () => {
+      nav.classList.remove(CONFIG.classes.mobileNavOpen);
+      document.body.classList.remove(CONFIG.classes.bodyNavOpen);
+      setAriaExpanded(toggle, false);
+    };
+
+    const isOpen = () => nav.classList.contains(CONFIG.classes.mobileNavOpen);
+
+    safeAddEvent(toggle, 'click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isOpen() ? close() : open();
+    });
+
+    // Click outside closes (only if nav is visible)
+    safeAddEvent(document, 'click', (e) => {
+      if (!isOpen()) return;
+      if (!isVisible(nav)) return;
+
+      const t = e.target;
+      if (nav.contains(t) || toggle.contains(t)) return;
+      close();
+    });
+
+    // ESC closes
+    safeAddEvent(document, 'keydown', (e) => {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') close();
+    });
+
+    // Clicking a nav link closes
+    qsa('a', nav).forEach((a) => {
+      safeAddEvent(a, 'click', () => close());
+    });
+  };
+
+  // ---------------------------
+  // 4) Footer year
+  // ---------------------------
+  const initFooterYear = () => {
+    const yearEl = qs('[data-year]') || qs('#year') || qs('.js-year');
+    if (!yearEl) return;
+    yearEl.textContent = String(new Date().getFullYear());
+  };
+
+  // ---------------------------
+  // 5) Hooks for later (no UI yet)
+  // ---------------------------
+  const Theme = {
+    get() {
+      try { return localStorage.getItem(CONFIG.storage.theme) || ''; } catch (_) { return ''; }
+    },
+    set(mode) {
+      // mode: 'light' | 'dark' | ''
+      const root = document.documentElement;
+      root.classList.remove(CONFIG.classes.themeLight, CONFIG.classes.themeDark);
+
+      if (mode === 'light') root.classList.add(CONFIG.classes.themeLight);
+      if (mode === 'dark') root.classList.add(CONFIG.classes.themeDark);
+
+      try { localStorage.setItem(CONFIG.storage.theme, mode); } catch (_) {}
+      document.dispatchEvent(new CustomEvent('eclipse:themechange', { detail: { mode } }));
     }
+  };
 
-    try {
-      const formData = new FormData(form);
-      const res = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-        headers: { Accept: "application/json" },
-      });
-
-      if (res.ok) {
-        setStatus("Sent.");
-        form.reset();
-
-        // Clear quickly (~2s) and restore button
-        setTimeout(() => {
-          setStatus("");
-        }, 2000);
-      } else {
-        setStatus("Error. Please try again or email contact@eclipseglobalhq.com.");
-      }
-    } catch (err) {
-      setStatus("Network issue. Please try again or email contact@eclipseglobalhq.com.");
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalBtnText || "Send to HQ";
-      }
+  const Language = {
+    get() {
+      try { return localStorage.getItem(CONFIG.storage.language) || 'en'; } catch (_) { return 'en'; }
+    },
+    set(lang) {
+      // lang: 'en' now; later expand
+      try { localStorage.setItem(CONFIG.storage.language, lang); } catch (_) {}
+      document.dispatchEvent(new CustomEvent('eclipse:languagechange', { detail: { lang } }));
     }
+  };
+
+  // Expose minimal hooks for later Mini Lucien work (not a framework; just handles)
+  window.ECLIPSE_HQ = window.ECLIPSE_HQ || {};
+  window.ECLIPSE_HQ.Theme = Theme;
+  window.ECLIPSE_HQ.Language = Language;
+
+  // ---------------------------
+  // Boot
+  // ---------------------------
+  onReady(() => {
+    initGlobeAutoload();
+    initDivisionsDropdown();
+    initMobileNav();
+    initFooterYear();
   });
-}
+})();

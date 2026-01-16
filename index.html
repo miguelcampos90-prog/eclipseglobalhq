@@ -20,7 +20,7 @@
 
 <body class="eg-body">
   <!-- =========================
-       HEADER / NAV
+       HEADER / NAV (NO HERO IN HERE)
   ========================== -->
   <header class="eg-header">
     <div class="eg-container eg-header-inner">
@@ -33,7 +33,7 @@
       </div>
 
       <nav class="eg-nav" data-eg-nav>
-        <a href="#core" class="eg-nav-link">Home</a>
+        <a href="#home" class="eg-nav-link">Home</a>
         <a href="#about" class="eg-nav-link">About HQ</a>
         <a href="#signal-map" class="eg-nav-link">Signal Map</a>
         <a href="#what-hq-does" class="eg-nav-link">What HQ Does</a>
@@ -67,7 +67,7 @@
 
         <a href="#contact" class="eg-nav-link">Contact</a>
 
-        <!-- Visible language option (wired in Step 3) -->
+        <!-- Visible language button (wired later) -->
         <button class="eg-nav-link eg-nav-pill" type="button" aria-label="Change language">
           EN
         </button>
@@ -92,51 +92,29 @@
   <main class="eg-shell">
 
     <!-- =====================
-         HERO (Clean, No Globe Wiring Yet)
-         NOTE: We keep the globe container IDs for Step 2, but it will show the fallback image for now.
+         HERO (MOVED OUT OF HEADER)
     ====================== -->
-    <section id="core" class="hq-hero">
-      <div class="hq-hero-bg" aria-hidden="true">
-        <div id="globeViz" class="hq-globe"></div>
-        <img
-          id="globeFallback"
-          class="hq-globe-fallback"
-          src="assets/images/brand_atmosphere.png"
-          alt=""
-        />
-        <div class="hq-hero-vignette"></div>
+    <section id="home" class="hero-globe">
+      <div id="globeFallback" class="globe-fallback" aria-hidden="true">
+        <!-- Uses an EXISTING repo image (no missing assets) -->
+        <img src="assets/images/brand_atmosphere.png" alt="" />
       </div>
 
-      <div class="eg-container hq-hero-inner">
-        <p class="hq-eyebrow">ECLIPSE GLOBAL HQ</p>
+      <div id="globeViz" class="globe-canvas" aria-hidden="true"></div>
 
-        <h1 class="hq-title">Eclipse Global HQ</h1>
-        <p class="hq-subtitle">Central Command for the Eclipse Network</p>
+      <div class="hero-overlay">
+        <h1 class="hero-title">Eclipse Global HQ</h1>
+        <p class="hero-subtitle">Central Command for the Eclipse Network</p>
 
-        <div class="hq-taglines">
-          <p>Quiet Command. Global Impact.</p>
-          <p>One Standard. One Network. Worldwide.</p>
-          <p>Innovation that ships. Infrastructure that holds.</p>
-        </div>
+        <p class="hero-taglines">
+          Quiet Command. Global Impact.<br />
+          One Standard. One Network. Worldwide.<br />
+          Innovation that ships. Infrastructure that holds.
+        </p>
 
-        <div class="hq-actions">
-          <a class="eg-btn eg-btn-primary" href="#contact">Connect to HQ</a>
-          <a class="eg-btn eg-btn-ghost" href="#divisions">View Divisions</a>
-        </div>
-
-        <div class="hq-quickfacts" role="list" aria-label="HQ quick facts">
-          <div class="hq-fact" role="listitem">
-            <div class="hq-fact-label">Focus</div>
-            <div class="hq-fact-value">Structures that scale</div>
-          </div>
-          <div class="hq-fact" role="listitem">
-            <div class="hq-fact-label">Delivery</div>
-            <div class="hq-fact-value">Build → Validate → Deploy</div>
-          </div>
-          <div class="hq-fact" role="listitem">
-            <div class="hq-fact-label">Method</div>
-            <div class="hq-fact-value">The Lighthouse Method</div>
-          </div>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="#contact">Connect to HQ</a>
+          <a class="btn btn-secondary" href="#divisions">View Divisions</a>
         </div>
       </div>
     </section>
@@ -214,12 +192,6 @@
           <p>
             <strong>HQ builds structures that scale—then equips Eclipse divisions and aligned organizations to execute with clarity through The Lighthouse Method.</strong>
           </p>
-
-          <div class="eg-bullets">
-            <div class="eg-bullet">Architect → Validate → Deploy</div>
-            <div class="eg-bullet">Built once, deployed many times</div>
-            <div class="eg-bullet">Clarity you can operate</div>
-          </div>
         </div>
       </section>
 
@@ -242,30 +214,23 @@
       </section>
 
       <!-- =====================
-           SIGNAL MAP (Public, Preview)
+           SIGNAL MAP (Preview)
       ====================== -->
       <section id="signal-map" class="eg-section">
         <header class="eg-section-header">
           <h2 class="eg-section-title">Global Signal Map</h2>
           <p class="eg-section-subtitle">
-            A public view of movement and progress across the Eclipse Network—region-level only.
+            Movement + Progress (region-level). Full interactive map lives in the Signal Map page.
           </p>
         </header>
 
-        <div class="eg-signal-preview">
-          <div class="eg-signal-legend">
-            <span class="eg-chip eg-chip-active">Active</span>
-            <span class="eg-chip eg-chip-building">Building</span>
-            <span class="eg-chip eg-chip-planned">Planned</span>
-          </div>
-
-          <div class="eg-signal-note">
-            This preview becomes interactive in Step 2 (auto-rotate + hover), with Movement + Progress rules per division.
-          </div>
-
-          <a class="eg-btn eg-btn-ghost" href="dashboard.html">
-            Open full Signal Map view →
-          </a>
+        <div class="eg-prose">
+          <p>
+            HQ highlights persist. Transport highlights are temporary (rolling 3–6 months). Properties persist when owned.
+          </p>
+          <p>
+            <a class="eg-nav-link" href="dashboard.html">Open full Signal Map →</a>
+          </p>
         </div>
       </section>
 
@@ -280,78 +245,37 @@
           </p>
         </header>
 
-        <div class="eg-division-grid">
-          <article class="eg-division-card">
-            <div class="eg-division-chip">Logistics</div>
-            <h3 class="eg-division-title">Eclipse Global Logistics</h3>
-            <p class="eg-division-body">Global logistics backbone and command-aligned execution.</p>
-            <a class="eg-division-link" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">
-              Visit site →
-            </a>
+        <div class="eg-section-grid">
+          <article class="eg-card">
+            <h3 class="eg-card-title">Eclipse Global Logistics</h3>
+            <p class="eg-card-body">Global logistics backbone and command-aligned execution.</p>
+            <p><a class="eg-nav-link" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">Visit →</a></p>
           </article>
 
-          <article class="eg-division-card">
-            <div class="eg-division-chip eg-division-chip--transport">Transport</div>
-            <h3 class="eg-division-title">Eclipse Transport Co.</h3>
-            <p class="eg-division-body">Transport execution built on clarity, discipline, and predictable delivery.</p>
-            <a class="eg-division-link" href="https://eclipsetransportco.com" target="_blank" rel="noopener">
-              Visit site →
-            </a>
+          <article class="eg-card">
+            <h3 class="eg-card-title">Eclipse Transport Co.</h3>
+            <p class="eg-card-body">Transport execution built on clarity, discipline, and predictable delivery.</p>
+            <p><a class="eg-nav-link" href="https://eclipsetransportco.com" target="_blank" rel="noopener">Visit →</a></p>
           </article>
 
-          <article class="eg-division-card">
-            <div class="eg-division-chip eg-division-chip--ember">Stone &amp; Ember</div>
-            <h3 class="eg-division-title">Stone &amp; Ember</h3>
-            <p class="eg-division-body">Brand and build work aligned with infrastructure and long-term value.</p>
-            <a class="eg-division-link" href="https://stoneandemberco.com" target="_blank" rel="noopener">
-              Visit site →
-            </a>
+          <article class="eg-card">
+            <h3 class="eg-card-title">Stone &amp; Ember</h3>
+            <p class="eg-card-body">Brand and build work aligned with infrastructure and long-term value.</p>
+            <p><a class="eg-nav-link" href="https://stoneandemberco.com" target="_blank" rel="noopener">Visit →</a></p>
           </article>
 
-          <article class="eg-division-card">
-            <div class="eg-division-chip eg-division-chip--properties">Properties</div>
-            <h3 class="eg-division-title">Eclipse Properties Management</h3>
-            <p class="eg-division-body">Properties, hubs, and holdings designed to support growth.</p>
-            <a class="eg-division-link" href="https://eclipsepropertiesmanagement.com" target="_blank" rel="noopener">
-              Visit site →
-            </a>
+          <article class="eg-card">
+            <h3 class="eg-card-title">Eclipse Properties Management</h3>
+            <p class="eg-card-body">Properties, hubs, and holdings designed to support growth.</p>
+            <p><a class="eg-nav-link" href="https://eclipsepropertiesmanagement.com" target="_blank" rel="noopener">Visit →</a></p>
           </article>
         </div>
       </section>
 
       <!-- =====================
-           VISUALS (Use Your Existing Images, Cleanly)
+           CONTACT (mailto only)
       ====================== -->
-      <section class="eg-section">
-        <header class="eg-section-header">
-          <h2 class="eg-section-title">Visual language</h2>
-          <p class="eg-section-subtitle">
-            Dark baseline. Single light source. Metallic authority. Division glow.
-          </p>
-        </header>
-
-        <div class="eg-gallery">
-          <a class="eg-gallery-item" href="assets/images/brand_atmosphere.png" target="_blank" rel="noopener">
-            <img src="assets/images/brand_atmosphere.png" alt="Brand atmosphere" />
-            <div class="eg-gallery-caption">Atmosphere</div>
-          </a>
-
-          <a class="eg-gallery-item" href="assets/images/command_interface.png" target="_blank" rel="noopener">
-            <img src="assets/images/command_interface.png" alt="Command interface artwork" />
-            <div class="eg-gallery-caption">Command Interface</div>
-          </a>
-
-          <a class="eg-gallery-item" href="assets/images/division_logos.png" target="_blank" rel="noopener">
-            <img src="assets/images/division_logos.png" alt="Division insignias" />
-            <div class="eg-gallery-caption">Division Insignias</div>
-          </a>
-        </div>
-      </section>
-
-      <!-- =====================
-           CONTACT (mailto only, locked)
-      ====================== -->
-      <section id="contact" class="eg-section eg-section--contact">
+      <section id="contact" class="eg-section">
         <header class="eg-section-header">
           <h2 class="eg-section-title">Connect to HQ</h2>
           <p class="eg-section-subtitle">
@@ -359,14 +283,8 @@
           </p>
         </header>
 
-        <div class="eg-contact-simple">
-          <div class="eg-contact-card">
-            <div class="eg-contact-label">Email</div>
-            <a class="eg-contact-email" href="mailto:contact@eclipseglobalhq.com">contact@eclipseglobalhq.com</a>
-            <div class="eg-contact-small">
-              Tip: include your role (shipper / carrier / partner / HQ) and your objective.
-            </div>
-          </div>
+        <div class="eg-prose">
+          <p><strong>Email:</strong> <a href="mailto:contact@eclipseglobalhq.com">contact@eclipseglobalhq.com</a></p>
         </div>
       </section>
 
@@ -378,24 +296,12 @@
   ========================== -->
   <footer class="eg-footer">
     <div class="eg-container eg-footer-inner">
-      <div class="eg-footer-left">
-        <div class="eg-logo eg-logo--small">
-          <div class="eg-logo-mark">EG</div>
-          <div class="eg-logo-copy">
-            <span class="eg-logo-text">ECLIPSE GLOBAL HQ</span>
-            <span class="eg-tagline">BRAIN • SIGNAL • INFRASTRUCTURE</span>
-          </div>
-        </div>
+      <div>
         <p class="eg-footer-text">
           Structures that scale. Innovation that ships. Infrastructure that holds.
         </p>
       </div>
-
-      <div class="eg-footer-right">
-        <p class="eg-footer-meta">
-          <span>© <span data-eg-year></span> Eclipse Global HQ.</span>
-        </p>
-      </div>
+      <p class="eg-footer-meta">© <span data-eg-year></span> Eclipse Global HQ.</p>
     </div>
   </footer>
 </body>

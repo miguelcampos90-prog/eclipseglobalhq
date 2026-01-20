@@ -13,10 +13,59 @@
   </script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eclipse Global HQ – Global Signal Map</title>
+  <title>Eclipse Global HQ – Manager Console</title>
 
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="assets/js/main.js" defer></script>
+
+  <style>
+    /* Minimal console framing (safe, no new deps) */
+    .console-note { opacity: 0.82; line-height: 1.45; }
+    .console-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .console-badge strong { opacity: 0.95; }
+    .console-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .console-card {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.04);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .console-card h3 { margin: 0 0 8px 0; font-size: 14px; letter-spacing: 0.2px; }
+    .console-card p { margin: 0; opacity: 0.82; line-height: 1.45; }
+    .console-actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .console-pill {
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      text-decoration:none;
+      color: inherit;
+      font: inherit;
+      cursor:pointer;
+      white-space: nowrap;
+    }
+    .console-pill.primary{
+      background: rgba(61,132,245,0.92);
+      border-color: rgba(255,255,255,0.16);
+      color: #fff;
+    }
+    .console-pill:hover { filter: brightness(1.06); }
+    code { opacity: 0.92; }
+  </style>
 </head>
 
 <body class="eg-body">
@@ -29,15 +78,13 @@
         <div class="eg-logo-mark">EG</div>
         <div class="eg-logo-copy">
           <span class="eg-logo-text">ECLIPSE GLOBAL HQ</span>
-          <span class="eg-tagline">SIGNAL MAP</span>
+          <span class="eg-tagline">MANAGER CONSOLE</span>
         </div>
       </div>
 
       <nav class="eg-nav" data-eg-nav>
-        <a href="index.html#home" class="eg-nav-link">Home</a>
-        <a href="index.html#about" class="eg-nav-link">About HQ</a>
-        <a href="dashboard.html" class="eg-nav-link">Signal Map</a>
-        <a href="index.html#what-hq-does" class="eg-nav-link">What HQ Does</a>
+        <a href="index.html#home" class="eg-nav-link">Public HQ</a>
+        <a href="https://portal.eclipseglobalhq.com" class="eg-nav-link">Portal</a>
 
         <div class="eg-nav-dropdown" data-eg-dropdown>
           <button
@@ -68,7 +115,7 @@
 
         <a href="index.html#contact" class="eg-nav-link">Contact</a>
 
-        <!-- Visible language button (wired later) -->
+        <!-- Visible language pill (wired later) -->
         <button class="eg-nav-link eg-nav-pill" type="button" aria-label="Change language">
           EN
         </button>
@@ -92,75 +139,108 @@
        MAIN
   ========================== -->
   <main class="eg-shell">
-    <!-- Stage: we reuse the hero-globe structure so Step 4 can wire the real globe here -->
-    <section class="hero-globe" id="signal-map">
+    <!-- Console Stage (keeps globe mount for future) -->
+    <section class="hero-globe" id="console">
       <div id="globeFallback" class="globe-fallback" aria-hidden="true">
         <img src="assets/images/brand_atmosphere.png" alt="" />
       </div>
       <div id="globeViz" class="globe-canvas" aria-hidden="true"></div>
 
       <div class="hero-overlay">
-        <h1 class="hero-title">Global Signal Map</h1>
-        <p class="hero-subtitle">Movement + Progress (region-level). Public view.</p>
+        <h1 class="hero-title">Manager Console</h1>
+        <p class="hero-subtitle">Signal Map control room (restricted)</p>
 
         <p class="hero-taglines">
-          This map shows how the Eclipse Network moves and expands.<br />
-          It does not display sensitive operational detail.
+          This console is for internal coordination and publishing control.<br />
+          Public Signal Map remains region-level and non-sensitive.
         </p>
 
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="index.html#contact">Connect to HQ</a>
-          <a class="btn btn-secondary" href="index.html#divisions">View Divisions</a>
+          <a class="btn btn-primary" href="https://portal.eclipseglobalhq.com">Back to Portal</a>
+          <a class="btn btn-secondary" href="index.html#signal-map">View Public Signal Map</a>
         </div>
       </div>
     </section>
 
     <div class="eg-container">
-      <!-- Rules / Legend -->
+      <!-- Console overview -->
       <section class="eg-section">
         <header class="eg-section-header">
-          <h2 class="eg-section-title">How highlights work</h2>
-          <p class="eg-section-subtitle">Movement + Progress rules by division.</p>
+          <h2 class="eg-section-title">Console status</h2>
+          <p class="eg-section-subtitle">Where publishing stands right now.</p>
         </header>
 
         <div class="eg-prose">
-          <p><strong>Status legend:</strong> Active / Building / Planned</p>
-          <p><strong>HQ:</strong> stays highlighted (persistent)</p>
-          <p><strong>Transport:</strong> temporary highlights (rolling 3–6 month log)</p>
-          <p><strong>Properties:</strong> if owned, stays highlighted (persistent)</p>
-          <p><strong>Note:</strong> This is a public, region-level view. Exact coordinates and internal details are not displayed.</p>
+          <p class="console-note">
+            <span class="console-badge"><strong>Path 2 (Now):</strong> Sheet → Apps Script → JSON feed</span>
+            <span class="console-badge" style="margin-left:8px;"><strong>Path 3 (Later):</strong> Console writes + publishes</span>
+          </p>
+          <p class="console-note" style="margin-top:10px;">
+            Until the feed is wired, the public globe reads from the current dataset:
+            <code>assets/data/public_signal_map.json</code>.
+          </p>
+        </div>
+
+        <div class="console-grid">
+          <div class="console-card">
+            <h3>What you can do today</h3>
+            <p>
+              Review what’s currently public, confirm movement/progress logic, and prepare the next publishing workflow.
+            </p>
+          </div>
+
+          <div class="console-card">
+            <h3>What changes with Path 2</h3>
+            <p>
+              Updating the Sheet updates the map automatically. Transport rolls off after 6 months. HQ + Properties persist.
+            </p>
+          </div>
+
+          <div class="console-card">
+            <h3>What changes with Path 3</h3>
+            <p>
+              The Console becomes the write/publish tool — approvals, logs, and governed releases.
+            </p>
+          </div>
+        </div>
+
+        <div class="console-actions">
+          <a class="console-pill primary" href="index.html#contact">Open Scale Readiness Requests</a>
+          <a class="console-pill" href="https://portal.eclipseglobalhq.com">Portal</a>
+          <a class="console-pill" href="mailto:contact@eclipseglobalhq.com">Email HQ</a>
         </div>
       </section>
 
-      <!-- Filters (UI now, wired later) -->
-      <section class="eg-section">
+      <!-- Rules / Legend -->
+      <section class="eg-section" id="rules">
         <header class="eg-section-header">
-          <h2 class="eg-section-title">Filters</h2>
-          <p class="eg-section-subtitle">These will become interactive when the globe is wired.</p>
+          <h2 class="eg-section-title">Signal Map rules (public)</h2>
+          <p class="eg-section-subtitle">Movement + Progress locks (region-level only).</p>
         </header>
 
-        <div class="eg-hero-actions">
-          <span class="eg-pill">HQ (Persistent)</span>
-          <span class="eg-pill">Logistics</span>
-          <span class="eg-pill">Transport (3–6 month)</span>
-          <span class="eg-pill">Properties (Owned)</span>
-          <span class="eg-pill">Innovation Labs (HQ)</span>
+        <div class="eg-prose">
+          <p><strong>Focus:</strong> Movement + Progress</p>
+          <p><strong>Level:</strong> Region-level only</p>
+          <p><strong>HQ:</strong> persistent highlight</p>
+          <p><strong>Transport:</strong> rolling highlights (auto-roll off after 6 months once Path 2 feed is live)</p>
+          <p><strong>Properties:</strong> persistent when owned</p>
+          <p><strong>Public safety:</strong> no sensitive operational detail (no coordinates, no customer specifics)</p>
         </div>
       </section>
 
       <!-- Data source note -->
-      <section class="eg-section">
+      <section class="eg-section" id="data">
         <header class="eg-section-header">
-          <h2 class="eg-section-title">Public data source</h2>
-          <p class="eg-section-subtitle">This page reads from your public signal dataset.</p>
+          <h2 class="eg-section-title">Current public dataset</h2>
+          <p class="eg-section-subtitle">What the public globe reads today.</p>
         </header>
 
         <div class="eg-prose">
           <p>
             Dataset: <code>assets/data/public_signal_map.json</code>
           </p>
-          <p>
-            Next step is to wire the globe so this page renders arcs (movement) and region highlights (progress).
+          <p class="console-note">
+            Next implementation step is to wire the globe rendering to this data (and later to the Path 2 feed endpoint).
           </p>
         </div>
       </section>
@@ -177,8 +257,7 @@
           Quiet Command. Global Impact. Innovation that ships. Infrastructure that holds.
         </p>
       </div>
-      <p class="eg-footer-meta">© <span data-eg-year></span> Eclipse Global HQ.</p>
+      <p class="eg-footer-meta">© <span data-year></span> Eclipse Global HQ.</p>
     </div>
   </footer>
-</body>
-</html>
+</body

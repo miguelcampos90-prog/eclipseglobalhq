@@ -9,41 +9,248 @@
   <script src="assets/js/main.js" defer></script>
 
   <style>
-    /* Minimal safe styling in case your CSS doesn't cover portal layout yet */
-    .portal-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 16px; }
-    .portal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 20px; }
-    .portal-card { border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px; text-decoration: none; display: block; }
-    .portal-card h3 { margin: 0 0 6px 0; }
-    .portal-card p { margin: 0; opacity: 0.85; }
+    :root{
+      --hq: #3D84F5;
+      --bg: rgba(6,10,26,0.92);
+      --card: rgba(255,255,255,0.04);
+      --stroke: rgba(255,255,255,0.14);
+      --stroke2: rgba(255,255,255,0.10);
+      --text: rgba(255,255,255,0.94);
+      --muted: rgba(255,255,255,0.72);
+      --shadow: 0 24px 64px rgba(0,0,0,0.55);
+    }
+
+    .portal-shell{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 16px 44px;
+    }
+
+    .portal-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .portal-brand{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+
+    .portal-title{
+      margin:0;
+      font-size: 28px;
+      letter-spacing: 0.2px;
+      color: var(--text);
+    }
+
+    .portal-sub{
+      margin:0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .portal-actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+      margin-top: 2px;
+    }
+
+    .pbtn{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--stroke);
+      color: var(--text);
+      text-decoration:none;
+      font-size: 12px;
+      cursor:pointer;
+      user-select:none;
+      backdrop-filter: blur(10px);
+    }
+
+    .pbtn.primary{
+      background: rgba(61,132,245,0.92);
+      border-color: rgba(255,255,255,0.16);
+      color: #fff;
+    }
+
+    .section{
+      background: var(--bg);
+      border: 1px solid var(--stroke2);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      margin-top: 14px;
+    }
+
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .section h2{
+      margin:0;
+      font-size: 14px;
+      letter-spacing: 0.25px;
+      color: var(--text);
+    }
+
+    .section-note{
+      margin:0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .card{
+      display:block;
+      text-decoration:none;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 14px;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    .card:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+
+    .card h3{
+      margin: 0 0 6px;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .card p{
+      margin:0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.82);
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .badge.lock{
+      border-color: rgba(255,255,255,0.18);
+    }
+
+    .footerline{
+      margin-top: 16px;
+      color: rgba(255,255,255,0.55);
+      font-size: 11px;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .footerline a{
+      color: rgba(255,255,255,0.78);
+      text-decoration:none;
+    }
   </style>
 </head>
 
 <body>
-  <main class="portal-wrap">
-    <h1>Eclipse HQ Portal</h1>
-    <p>Internal access point (link hub). Portal stays clean; tools live behind Console.</p>
+  <main class="portal-shell">
+    <div class="portal-top">
+      <div class="portal-brand">
+        <h1 class="portal-title">Eclipse HQ Portal</h1>
+        <p class="portal-sub">
+          Employee access point (link hub). Portal stays clean; tools live behind the Manager Console.
+        </p>
+      </div>
 
-    <section class="portal-grid">
-      <a class="portal-card" href="https://console.eclipseglobalhq.com">
-        <h3>Open Console</h3>
-        <p>Admin dashboard (protected)</p>
-      </a>
+      <div class="portal-actions">
+        <a class="pbtn" href="https://eclipseglobalhq.com">← Public HQ</a>
+        <a class="pbtn primary" href="mailto:contact@eclipseglobalhq.com">Contact HQ</a>
+      </div>
+    </div>
 
-      <a class="portal-card" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">
-        <h3>Eclipse Global Logistics</h3>
-        <p>External / brand site</p>
-      </a>
+    <!-- Employee Hub -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Employee Hub</h2>
+        <p class="section-note">Quick access to Eclipse division sites.</p>
+      </div>
 
-      <a class="portal-card" href="https://eclipsetransportco.com" target="_blank" rel="noopener">
-        <h3>Eclipse Transport</h3>
-        <p>External / brand site</p>
-      </a>
+      <div class="grid">
+        <a class="card" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">
+          <h3>Eclipse Global Logistics</h3>
+          <p>External / brand site</p>
+        </a>
 
-      <a class="portal-card" href="https://stoneandemberco.com" target="_blank" rel="noopener">
-        <h3>Stone & Ember</h3>
-        <p>External / brand site</p>
-      </a>
+        <a class="card" href="https://eclipsetransportco.com" target="_blank" rel="noopener">
+          <h3>Eclipse Transport</h3>
+          <p>External / brand site</p>
+        </a>
+
+        <a class="card" href="https://stoneandemberco.com" target="_blank" rel="noopener">
+          <h3>Stone &amp; Ember</h3>
+          <p>External / brand site</p>
+        </a>
+
+        <a class="card" href="https://eclipsepropertiesmanagement.com" target="_blank" rel="noopener">
+          <h3>Eclipse Properties Management</h3>
+          <p>External / brand site</p>
+        </a>
+      </div>
     </section>
+
+    <!-- Manager Console (inside Portal per Option 2) -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Manager Console</h2>
+        <span class="badge lock">Restricted</span>
+      </div>
+
+      <div class="grid">
+        <a class="card" href="https://console.eclipseglobalhq.com">
+          <h3>Open Manager Console</h3>
+          <p>Admin dashboard (protected). Recordkeeping and publishing controls live here.</p>
+        </a>
+      </div>
+    </section>
+
+    <div class="footerline">
+      <span>© <span data-year></span> Eclipse Global HQ</span>
+      <span>
+        Need access issues fixed? <a href="mailto:contact@eclipseglobalhq.com">Email HQ</a>
+      </span>
+    </div>
   </main>
 </body>
 </html>

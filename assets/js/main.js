@@ -4,7 +4,8 @@
    - Nav: Divisions dropdown open/close + click-outside + ESC
    - Nav: Mobile menu toggle open/close
    - Footer: auto-set current year
-   - HQ Guide (public): navigation helper + language switching (EN/ES)
+   - HQ Guide (public): navigation helper + language switching (EN/ES state)
+   - HQ Guide drop-down (public): 5s delay every visit (overlay), buttons: Signal Map / Contact / Divisions
 */
 (() => {
   'use strict';
@@ -14,10 +15,11 @@
     globeScriptId: 'eclipse-hq-globe-script',
     debug: false,
     brandAssistantName: 'HQ Guide', // public widget name
+    guideDropDelayMs: 5000,         // locked: 5s
+    contactMailto: 'mailto:contact@eclipseglobalhq.com', // locked via ledger
     storage: {
       theme: 'eclipse_theme',     // later
       language: 'eclipse_lang',
-      askedLang: 'eclipse_asked_lang_once',
     },
     classes: {
       dropdownOpen: 'is-open',
@@ -25,7 +27,6 @@
       bodyNavOpen: 'nav-open',
       themeLight: 'theme-light',
       themeDark: 'theme-dark',
-      langOpen: 'lang-open'
     },
   };
 
@@ -57,6 +58,61 @@
   });
 
   // ---------------------------
+  // Shared helpers (Signal Map / Divisions / Contact)
+  // ---------------------------
+  function getDivisionsElements() {
+    const toggle =
+      qs('[data-dropdown-toggle="divisions"]') ||
+      qs('#divisionsToggle') ||
+      qs('#divisions-toggle') ||
+      qs('.divisions-toggle') ||
+      qs('[aria-controls="divisionsMenu"]');
+
+    const menu =
+      qs('[data-dropdown-menu="divisions"]') ||
+      qs('#divisionsMenu') ||
+      qs('#divisions-menu') ||
+      qs('.divisions-menu');
+
+    if (!toggle || !menu) return { toggle: null, menu: null };
+    if (!menu.id) menu.id = 'divisionsMenu';
+    return { toggle, menu };
+  }
+
+  function openDivisionsMenu() {
+    const { toggle, menu } = getDivisionsElements();
+    if (!toggle || !menu) return false;
+    menu.classList.add(CONFIG.classes.dropdownOpen);
+    setAriaExpanded(toggle, true);
+    return true;
+  }
+
+  function scrollToSignalMap() {
+    // "Signal Map" = globe section. Try anchors first, then fall back to #globeViz.
+    const el =
+      qs('#signal-map') ||
+      qs('[data-signal-map]') ||
+      qs('#globe') ||
+      qs('#globeViz') ||
+      document.getElementById('globeViz');
+
+    if (!el) {
+      // Last resort: go to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return false;
+    }
+
+    // Scroll to the nearest section if possible (cleaner alignment)
+    const section = el.closest('section') || el;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
+
+  function openContact() {
+    window.location.href = CONFIG.contactMailto;
+  }
+
+  // ---------------------------
   // 1) Globe autoloader
   // ---------------------------
   const initGlobeAutoload = () => {
@@ -71,21 +127,8 @@
   // 2) Divisions dropdown
   // ---------------------------
   const initDivisionsDropdown = () => {
-    const toggle =
-      qs('[data-dropdown-toggle="divisions"]') ||
-      qs('#divisionsToggle') ||
-      qs('#divisions-toggle') ||
-      qs('.divisions-toggle') ||
-      qs('[aria-controls="divisionsMenu"]');
-
-    const menu =
-      qs('[data-dropdown-menu="divisions"]') ||
-      qs('#divisionsMenu') ||
-      qs('#divisions-menu') ||
-      qs('.divisions-menu');
-
+    const { toggle, menu } = getDivisionsElements();
     if (!toggle || !menu) return;
-    if (!menu.id) menu.id = 'divisionsMenu';
 
     const open = () => { menu.classList.add(CONFIG.classes.dropdownOpen); setAriaExpanded(toggle, true); };
     const close = () => { menu.classList.remove(CONFIG.classes.dropdownOpen); setAriaExpanded(toggle, false); };
@@ -160,34 +203,33 @@
   };
 
   // ---------------------------
-  // 5) Language (EN/ES) - dropdown on the chip
+  // 5) Language (EN/ES) - FIXED dropdown control (independent of header DOM)
+  // Direct truth: ES is a later project for full-page copy. This control sets state + HQ Guide strings.
   // ---------------------------
   const I18N = {
     en: {
-      nav_home: 'HOME',
-      nav_about: 'ABOUT HQ',
       nav_signal: 'SIGNAL MAP',
-      nav_what: 'WHAT HQ DOES',
       nav_contact: 'CONTACT',
-      btn_view_divisions: 'View Divisions',
+      nav_divisions: 'DIVISIONS',
       asst_title: CONFIG.brandAssistantName,
       asst_prompt: 'Where should I take you?',
       asst_hint: 'Try: “signal map”, “contact”, or “divisions”.',
       close: 'Close',
       send: 'Send',
+      div_hint: 'Use “Eclipse Divisions” in the top navigation.',
+      help_hint: 'I can take you to: “signal map”, “contact”, or “divisions”.'
     },
     es: {
-      nav_home: 'INICIO',
-      nav_about: 'SOBRE HQ',
       nav_signal: 'MAPA DE SEÑALES',
-      nav_what: 'QUÉ HACE HQ',
       nav_contact: 'CONTACTO',
-      btn_view_divisions: 'Ver Divisiones',
+      nav_divisions: 'DIVISIONES',
       asst_title: CONFIG.brandAssistantName,
       asst_prompt: '¿A dónde quieres ir?',
       asst_hint: 'Prueba: “mapa de señales”, “contacto”, o “divisiones”.',
       close: 'Cerrar',
       send: 'Enviar',
+      div_hint: 'Usa “Eclipse Divisions” en la navegación superior.',
+      help_hint: 'Puedo llevarte a: “mapa de señales”, “contacto”, o “divisiones”.'
     }
   };
 
@@ -200,8 +242,8 @@
       const safe = (lang === 'es') ? 'es' : 'en';
       setLS(CONFIG.storage.language, safe);
       document.documentElement.setAttribute('lang', safe);
-      applyLanguageToPage(safe);
       updateLangChip(safe);
+      updateFixedLangControlLabel(safe);
       document.dispatchEvent(new CustomEvent('eclipse:languagechange', { detail: { lang: safe } }));
     }
   };
@@ -210,132 +252,303 @@
     const chip = qs('[data-lang-chip]') || qs('#langChip') || qs('.lang-chip');
     if (!chip) return;
     chip.textContent = lang.toUpperCase();
-    chip.style.cursor = 'pointer';
-    chip.style.userSelect = 'none';
-    chip.setAttribute('role', 'button');
-    chip.setAttribute('tabindex', '0');
-    chip.setAttribute('aria-haspopup', 'menu');
-    chip.setAttribute('aria-label', 'Language');
   }
 
-  function applyLanguageToPage(lang) {
-    const t = I18N[lang] || I18N.en;
-    updateLangChip(lang);
+  function injectFixedLangControl() {
+    if (qs('#eclipseLangCtl')) return;
 
-    const navMap = [
-      { key: 'nav_home', match: ['HOME', 'INICIO'] },
-      { key: 'nav_about', match: ['ABOUT HQ', 'SOBRE HQ'] },
-      { key: 'nav_signal', match: ['SIGNAL MAP', 'MAPA DE SEÑALES'] },
-      { key: 'nav_what', match: ['WHAT HQ DOES', 'QUÉ HACE HQ', 'QUE HACE HQ'] },
-      { key: 'nav_contact', match: ['CONTACT', 'CONTACTO'] },
-    ];
-
-    const navLinks = qsa('header a, nav a').filter(a => (a.textContent || '').trim().length);
-    navMap.forEach(({ key, match }) => {
-      const target = navLinks.find(a => match.includes((a.textContent || '').trim().toUpperCase()));
-      if (target) target.textContent = t[key];
-    });
-
-    const heroBtn = qsa('a,button').find(el => {
-      const txt = (el.textContent || '').trim();
-      return txt === 'View Divisions' || txt === 'Ver Divisiones';
-    });
-    if (heroBtn) heroBtn.textContent = t.btn_view_divisions;
-  }
-
-  function injectLangDropdown() {
-    if (qs('#langMenu')) return;
-
-    const chip = qs('[data-lang-chip]') || qs('#langChip') || qs('.lang-chip');
-    if (!chip) return;
-
-    // Minimal styles for the menu (no edits to style.css)
-    const styleId = 'lang-menu-styles';
+    const styleId = 'eclipse-langctl-styles';
     if (!qs('#' + styleId)) {
       const s = document.createElement('style');
       s.id = styleId;
       s.textContent = `
-        .lang-menu{
-          position: absolute;
+        #eclipseLangCtl{
+          position:fixed;
+          top: calc(env(safe-area-inset-top, 0px) + 14px);
+          right: 14px;
+          z-index: 10000;
+          font-family: inherit;
+        }
+        @media (max-width: 720px){
+          #eclipseLangCtl{
+            top: calc(env(safe-area-inset-top, 0px) + 64px);
+          }
+        }
+        .ecl-lang-btn{
+          display:flex; align-items:center; gap:8px;
+          background: rgba(6,10,26,0.86);
+          border: 1px solid rgba(255,255,255,0.14);
+          color: rgba(255,255,255,0.92);
+          padding: 8px 10px;
+          border-radius: 999px;
+          cursor: pointer;
+          box-shadow: 0 18px 48px rgba(0,0,0,0.45);
+          backdrop-filter: blur(10px);
+          user-select:none;
+          font-size: 12px;
+          letter-spacing: 0.3px;
+        }
+        .ecl-lang-caret{ opacity:0.75; font-size: 12px; transform: translateY(-1px); }
+        .ecl-lang-menu{
+          position:absolute;
           top: 44px;
           right: 0;
-          min-width: 84px;
+          min-width: 120px;
           background: rgba(6,10,26,0.92);
           border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 12px;
+          border-radius: 14px;
           box-shadow: 0 18px 48px rgba(0,0,0,0.45);
           backdrop-filter: blur(10px);
           padding: 6px;
-          display: none;
-          z-index: 9999;
+          display:none;
         }
-        .lang-menu.is-open{ display:block; }
-        .lang-item{
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          padding: 8px 10px;
-          border-radius: 10px;
+        .ecl-lang-menu.is-open{ display:block; }
+        .ecl-lang-item{
+          width:100%;
+          display:flex;
+          justify-content:space-between;
+          padding: 10px 10px;
+          border-radius: 12px;
           border: 1px solid transparent;
           background: transparent;
           color: rgba(255,255,255,0.90);
-          cursor: pointer;
+          cursor:pointer;
           font-size: 12px;
         }
-        .lang-item:hover{
+        .ecl-lang-item:hover{
           background: rgba(255,255,255,0.06);
           border-color: rgba(255,255,255,0.12);
         }
+        .ecl-lang-kbd{ opacity:0.6; font-size: 11px; }
       `.trim();
       document.head.appendChild(s);
     }
 
-    // Anchor menu to the chip's parent container
-    const parent = chip.parentElement || document.body;
-    parent.style.position = parent.style.position || 'relative';
-
-    const menu = document.createElement('div');
-    menu.id = 'langMenu';
-    menu.className = 'lang-menu';
-    menu.setAttribute('role', 'menu');
-    menu.innerHTML = `
-      <button class="lang-item" type="button" data-lang="en" role="menuitem">EN</button>
-      <button class="lang-item" type="button" data-lang="es" role="menuitem">ES</button>
+    const ctl = document.createElement('div');
+    ctl.id = 'eclipseLangCtl';
+    ctl.innerHTML = `
+      <button id="eclipseLangBtn" class="ecl-lang-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Language">
+        <span id="eclipseLangLbl">EN</span>
+        <span class="ecl-lang-caret">▾</span>
+      </button>
+      <div id="eclipseLangMenu" class="ecl-lang-menu" role="menu">
+        <button class="ecl-lang-item" type="button" data-lang="en" role="menuitem">
+          <span>English</span><span class="ecl-lang-kbd">EN</span>
+        </button>
+        <button class="ecl-lang-item" type="button" data-lang="es" role="menuitem">
+          <span>Español</span><span class="ecl-lang-kbd">ES</span>
+        </button>
+      </div>
     `;
-    parent.appendChild(menu);
+    document.body.appendChild(ctl);
 
-    const open = () => menu.classList.add('is-open');
-    const close = () => menu.classList.remove('is-open');
-    const toggle = () => menu.classList.toggle('is-open');
+    const btn = qs('#eclipseLangBtn');
+    const menu = qs('#eclipseLangMenu');
 
-    safeAddEvent(chip, 'click', (e) => { e.preventDefault(); e.stopPropagation(); toggle(); });
-    safeAddEvent(chip, 'keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggle();
-      }
+    const open = () => { menu.classList.add('is-open'); btn?.setAttribute('aria-expanded', 'true'); };
+    const close = () => { menu.classList.remove('is-open'); btn?.setAttribute('aria-expanded', 'false'); };
+    const toggle = () => menu.classList.contains('is-open') ? close() : open();
+
+    safeAddEvent(btn, 'click', (e) => { e.preventDefault(); e.stopPropagation(); toggle(); });
+    safeAddEvent(btn, 'keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
       if (e.key === 'Escape') close();
     });
 
     safeAddEvent(menu, 'click', (e) => {
-      const btn = e.target.closest('[data-lang]');
-      if (!btn) return;
-      const lang = btn.getAttribute('data-lang');
+      const item = e.target.closest('[data-lang]');
+      if (!item) return;
+      const lang = item.getAttribute('data-lang');
       Language.set(lang);
       close();
     });
 
     safeAddEvent(document, 'click', (e) => {
       const t = e.target;
-      if (menu.contains(t) || chip.contains(t)) return;
+      if (ctl.contains(t)) return;
       close();
     });
 
     safeAddEvent(document, 'keydown', (e) => { if (e.key === 'Escape') close(); });
+
+    updateFixedLangControlLabel(Language.get());
+  }
+
+  function updateFixedLangControlLabel(lang) {
+    const lbl = qs('#eclipseLangLbl');
+    if (!lbl) return;
+    lbl.textContent = (lang || 'en').toUpperCase();
   }
 
   // ---------------------------
-  // 6) HQ Guide (navigation-only)
+  // 6) HQ Guide DROP-DOWN (locked behavior)
+  // - Every visit, 5s delay, drops down
+  // - Copy: "Where should I take you?"
+  // - Buttons: Signal Map / Contact / Divisions
+  // - Dismiss: no cooldown
+  // ---------------------------
+  function injectHqGuideDropStyles() {
+    if (qs('#hq-guide-drop-styles')) return;
+
+    const s = document.createElement('style');
+    s.id = 'hq-guide-drop-styles';
+    s.textContent = `
+      .hqg-drop{
+        position: fixed;
+        left: 50%;
+        top: calc(env(safe-area-inset-top, 0px) + 14px);
+        transform: translateX(-50%) translateY(-130%);
+        opacity: 0;
+        z-index: 9999;
+        width: min(980px, calc(100vw - 28px));
+        background: rgba(6,10,26,0.92);
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 18px;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+        backdrop-filter: blur(12px);
+        transition: transform 320ms ease, opacity 320ms ease;
+        overflow: hidden;
+      }
+      @media (max-width: 720px){
+        .hqg-drop{
+          top: calc(env(safe-area-inset-top, 0px) + 64px);
+          width: calc(100vw - 22px);
+        }
+      }
+      .hqg-drop.is-open{
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+      .hqg-inner{
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        align-items: center;
+        padding: 14px 14px 14px 14px;
+        position: relative;
+      }
+      .hqg-accent{
+        position:absolute;
+        left:0; top:0; bottom:0;
+        width: 6px;
+        background: rgba(61,132,245,0.95);
+        box-shadow: 0 0 22px rgba(61,132,245,0.35);
+      }
+      .hqg-title{
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        color: rgba(255,255,255,0.96);
+        margin: 0;
+        line-height: 1.2;
+      }
+      .hqg-sub{
+        font-size: 12px;
+        margin: 4px 0 0;
+        opacity: 0.78;
+      }
+      .hqg-actions{
+        display:flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .hqg-btn{
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.14);
+        color: rgba(255,255,255,0.92);
+        cursor: pointer;
+        font-size: 12px;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+      }
+      .hqg-btn.primary{
+        background: rgba(61,132,245,0.95);
+        border-color: rgba(255,255,255,0.18);
+        color: #fff;
+      }
+      .hqg-btn:hover{
+        filter: brightness(1.06);
+      }
+      .hqg-dismiss{
+        position:absolute;
+        right: 10px;
+        top: 10px;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.85);
+        cursor: pointer;
+        line-height: 1;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+    `.trim();
+    document.head.appendChild(s);
+  }
+
+  function injectHqGuideDrop() {
+    if (qs('#hqGuideDrop')) return;
+
+    injectHqGuideDropStyles();
+
+    const wrap = document.createElement('div');
+    wrap.id = 'hqGuideDrop';
+    wrap.className = 'hqg-drop';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-label', CONFIG.brandAssistantName);
+
+    wrap.innerHTML = `
+      <div class="hqg-inner">
+        <div class="hqg-accent" aria-hidden="true"></div>
+
+        <div style="padding-left:10px;">
+          <p class="hqg-title">Where should I take you?</p>
+        </div>
+
+        <div class="hqg-actions" aria-label="HQ Guide actions">
+          <button class="hqg-btn primary" id="hqgGoSignal" type="button">Signal Map</button>
+          <button class="hqg-btn" id="hqgGoContact" type="button">Contact</button>
+          <button class="hqg-btn" id="hqgGoDivisions" type="button">Divisions</button>
+        </div>
+
+        <button class="hqg-dismiss" id="hqgDismiss" type="button" aria-label="Dismiss">×</button>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+
+    const open = () => wrap.classList.add('is-open');
+    const close = () => wrap.classList.remove('is-open');
+
+    const btnSignal = qs('#hqgGoSignal');
+    const btnContact = qs('#hqgGoContact');
+    const btnDiv = qs('#hqgGoDivisions');
+    const btnDismiss = qs('#hqgDismiss');
+
+    safeAddEvent(btnSignal, 'click', () => { close(); scrollToSignalMap(); });
+    safeAddEvent(btnContact, 'click', () => { close(); openContact(); });
+
+    safeAddEvent(btnDiv, 'click', () => {
+      close();
+      // Ensure user sees the nav dropdown area, then open the dropdown.
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => { openDivisionsMenu(); }, 260);
+    });
+
+    safeAddEvent(btnDismiss, 'click', () => close());
+    safeAddEvent(document, 'keydown', (e) => { if (e.key === 'Escape') close(); });
+
+    // Locked behavior: show after ~5s every visit (no cooldown).
+    setTimeout(() => open(), CONFIG.guideDropDelayMs);
+  }
+
+  // ---------------------------
+  // 7) HQ Guide widget (existing, preserved) - navigation-only
   // ---------------------------
   function injectAssistantStyles() {
     if (qs('#assistant-styles')) return;
@@ -436,7 +649,7 @@
         <div class="asst-actions">
           <button class="asst-action" id="asstGoSignal" type="button">${t.nav_signal}</button>
           <button class="asst-action" id="asstGoContact" type="button">${t.nav_contact}</button>
-          <button class="asst-action" id="asstGoDiv" type="button">DIVISIONS</button>
+          <button class="asst-action" id="asstGoDiv" type="button">${t.nav_divisions}</button>
         </div>
       </div>
       <div class="asst-foot">
@@ -466,26 +679,31 @@
     const goDiv = qs('#asstGoDiv');
     const closeBtn = qs('#asstClose');
 
-    const routeToHash = (hash) => { window.location.hash = hash; close(); };
-
     const respond = (text) => {
       const langNow = Language.get();
+      const tt = I18N[langNow] || I18N.en;
       const s = (text || '').toLowerCase();
 
-      if (s.includes('signal') || s.includes('mapa') || s.includes('señal') || s.includes('senal')) { routeToHash('#signal-map'); return; }
-      if (s.includes('contact') || s.includes('contacto') || s.includes('email') || s.includes('mail')) { routeToHash('#contact'); return; }
-      if (s.includes('division') || s.includes('divisions') || s.includes('divisiones')) {
-        // If there's a divisions dropdown, we just tell them to use it (nav-only).
-        if (msg) msg.textContent = (langNow === 'es')
-          ? 'Usa “Eclipse Divisions” en la navegación superior.'
-          : 'Use “Eclipse Divisions” in the top navigation.';
+      if (s.includes('signal') || s.includes('mapa') || s.includes('señal') || s.includes('senal')) {
+        close();
+        scrollToSignalMap();
         return;
       }
 
-      if (msg) msg.textContent =
-        (langNow === 'es')
-          ? 'Puedo llevarte a: “mapa de señales”, “contacto”, o “divisiones”.'
-          : 'I can take you to: “signal map”, “contact”, or “divisions”.';
+      if (s.includes('contact') || s.includes('contacto') || s.includes('email') || s.includes('mail')) {
+        close();
+        openContact();
+        return;
+      }
+
+      if (s.includes('division') || s.includes('divisions') || s.includes('divisiones')) {
+        close();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => { openDivisionsMenu(); }, 260);
+        return;
+      }
+
+      if (msg) msg.textContent = tt.help_hint;
     };
 
     safeAddEvent(send, 'click', () => {
@@ -505,9 +723,9 @@
       }
     });
 
-    safeAddEvent(goSignal, 'click', () => routeToHash('#signal-map'));
-    safeAddEvent(goContact, 'click', () => routeToHash('#contact'));
-    safeAddEvent(goDiv, 'click', () => respond('divisions'));
+    safeAddEvent(goSignal, 'click', () => { close(); scrollToSignalMap(); });
+    safeAddEvent(goContact, 'click', () => { close(); openContact(); });
+    safeAddEvent(goDiv, 'click', () => { close(); window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => openDivisionsMenu(), 260); });
     safeAddEvent(closeBtn, 'click', () => close());
 
     // Update panel copy on language change
@@ -518,6 +736,7 @@
       if (title) title.textContent = tt.asst_title;
       if (goSignal) goSignal.textContent = tt.nav_signal;
       if (goContact) goContact.textContent = tt.nav_contact;
+      if (goDiv) goDiv.textContent = tt.nav_divisions;
       if (send) send.textContent = tt.send;
       if (closeBtn) closeBtn.textContent = tt.close;
       if (msg) msg.textContent = `${tt.asst_prompt}\n${tt.asst_hint}`;
@@ -544,9 +763,11 @@
   onReady(() => {
     const lang = Language.get();
     document.documentElement.setAttribute('lang', lang);
-    applyLanguageToPage(lang);
     updateLangChip(lang);
-    injectLangDropdown();
+
+    // NEW: fixed language dropdown (works even if header pill is broken)
+    injectFixedLangControl();
+    updateFixedLangControlLabel(lang);
 
     initGlobeAutoload();
     initDivisionsDropdown();
@@ -554,5 +775,8 @@
     initFooterYear();
 
     injectAssistantUI();
+
+    // NEW: HQ Guide top drop-down overlay (locked behavior)
+    injectHqGuideDrop();
   });
 })();

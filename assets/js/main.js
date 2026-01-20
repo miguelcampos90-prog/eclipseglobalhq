@@ -4,8 +4,8 @@
    - Nav: Divisions dropdown open/close + click-outside + ESC
    - Nav: Mobile menu toggle open/close
    - Footer: auto-set current year
-   - HQ Guide (public): navigation helper + language switching (EN/ES state)
-   - HQ Guide drop-down (public): 5s delay every visit (overlay), buttons: Signal Map / Contact / Divisions
+   - HQ Guide (public): navigation helper + language state (EN/ES)
+   - HQ Guide requirement (locked): every visit, 5s delay, it opens (no cooldown)
 */
 (() => {
   'use strict';
@@ -14,9 +14,9 @@
     globeScriptSrc: '/assets/js/hq-globe.js',
     globeScriptId: 'eclipse-hq-globe-script',
     debug: false,
-    brandAssistantName: 'HQ Guide', // public widget name
-    guideDropDelayMs: 5000,         // locked: 5s
-    contactMailto: 'mailto:contact@eclipseglobalhq.com', // locked via ledger
+    brandAssistantName: 'HQ Guide',
+    guideAutoOpenDelayMs: 5000, // locked: 5 seconds every visit
+    contactMailto: 'mailto:contact@eclipseglobalhq.com',
     storage: {
       theme: 'eclipse_theme',     // later
       language: 'eclipse_lang',
@@ -58,59 +58,21 @@
   });
 
   // ---------------------------
-  // Shared helpers (Signal Map / Divisions / Contact)
+  // 0) Cleanup (remove older injected controls if they exist)
   // ---------------------------
-  function getDivisionsElements() {
-    const toggle =
-      qs('[data-dropdown-toggle="divisions"]') ||
-      qs('#divisionsToggle') ||
-      qs('#divisions-toggle') ||
-      qs('.divisions-toggle') ||
-      qs('[aria-controls="divisionsMenu"]');
+  const cleanupInjected = () => {
+    // If a previous build injected a fixed language control, remove it (user wants LEFT pill only).
+    const fixedCtl = qs('#eclipseLangCtl');
+    if (fixedCtl) fixedCtl.remove();
+    const fixedStyles = qs('#eclipse-langctl-styles');
+    if (fixedStyles) fixedStyles.remove();
 
-    const menu =
-      qs('[data-dropdown-menu="divisions"]') ||
-      qs('#divisionsMenu') ||
-      qs('#divisions-menu') ||
-      qs('.divisions-menu');
-
-    if (!toggle || !menu) return { toggle: null, menu: null };
-    if (!menu.id) menu.id = 'divisionsMenu';
-    return { toggle, menu };
-  }
-
-  function openDivisionsMenu() {
-    const { toggle, menu } = getDivisionsElements();
-    if (!toggle || !menu) return false;
-    menu.classList.add(CONFIG.classes.dropdownOpen);
-    setAriaExpanded(toggle, true);
-    return true;
-  }
-
-  function scrollToSignalMap() {
-    // "Signal Map" = globe section. Try anchors first, then fall back to #globeViz.
-    const el =
-      qs('#signal-map') ||
-      qs('[data-signal-map]') ||
-      qs('#globe') ||
-      qs('#globeViz') ||
-      document.getElementById('globeViz');
-
-    if (!el) {
-      // Last resort: go to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return false;
-    }
-
-    // Scroll to the nearest section if possible (cleaner alignment)
-    const section = el.closest('section') || el;
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return true;
-  }
-
-  function openContact() {
-    window.location.href = CONFIG.contactMailto;
-  }
+    // Remove any old top banner if it exists.
+    const oldBanner = qs('#hqGuideDrop');
+    if (oldBanner) oldBanner.remove();
+    const oldBannerStyles = qs('#hq-guide-drop-styles');
+    if (oldBannerStyles) oldBannerStyles.remove();
+  };
 
   // ---------------------------
   // 1) Globe autoloader
@@ -126,9 +88,86 @@
   // ---------------------------
   // 2) Divisions dropdown
   // ---------------------------
+  const getDivisionsElements = () => {
+    const toggle =
+      qs('[data-dropdown-toggle="divisions"]') ||
+      qs('#divisionsToggle') ||
+      qs('#divisions-toggle') ||
+      qs('.divisions-toggle') ||
+      qs('[aria-controls="divisionsMenu"]');
+
+    const menu =
+      qs('[data-dropdown-menu="divisions"]') ||
+      qs('#divisionsMenu') ||
+      qs('#divisions-menu') ||
+      qs('.divisions-menu');
+
+    return { toggle, menu };
+  };
+
+  // Robust open: click if possible; if hover-only, simulate hover; if still fails, force open nearest menu.
+  const openDivisionsMenuRobust = () => {
+    const { toggle, menu } = getDivisionsElements();
+
+    const tryClick = (el) => {
+      try { el.focus?.(); el.click?.(); return true; } catch (_) { return false; }
+    };
+
+    const tryHover = (el) => {
+      try {
+        el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+        el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+        el.focus?.();
+        return true;
+      } catch (_) { return false; }
+    };
+
+    // 1) Known toggle
+    if (toggle) {
+      if (tryClick(toggle)) return true;
+      if (tryHover(toggle)) return true;
+    }
+
+    // 2) Find by visible text "Eclipse Divisions"
+    const candidates = qsa('header button, header a, nav button, nav a')
+      .filter(el => /eclipse\s*divisions/i.test((el.textContent || '').trim()));
+    if (candidates[0]) {
+      if (tryClick(candidates[0])) return true;
+      if (tryHover(candidates[0])) return true;
+    }
+
+    // 3) If menu exists, force open class
+    if (menu) {
+      menu.classList.add(CONFIG.classes.dropdownOpen);
+      return true;
+    }
+
+    // 4) Last resort: find the menu by searching for live division links in header/nav and open its container
+    const LIVE = [
+      'https://eclipsegloballogistics.com',
+      'https://eclipsetransportco.com',
+      'https://stoneandemberco.com',
+      'https://eclipsepropertiesmanagement.com'
+    ];
+
+    const headerOrNav = qs('header') || qs('nav') || document.body;
+    const foundLinks = LIVE.map(href => qs(`a[href="${href}"]`, headerOrNav)).filter(Boolean);
+
+    if (foundLinks.length >= 2) {
+      const common = foundLinks[0].closest('ul, .menu, .dropdown, .dropdown-menu, nav, header') || headerOrNav;
+      // Try common "open" classes
+      common.classList.add('open', 'is-open', 'show', 'active');
+      return true;
+    }
+
+    return false;
+  };
+
   const initDivisionsDropdown = () => {
     const { toggle, menu } = getDivisionsElements();
     if (!toggle || !menu) return;
+
+    if (!menu.id) menu.id = 'divisionsMenu';
 
     const open = () => { menu.classList.add(CONFIG.classes.dropdownOpen); setAriaExpanded(toggle, true); };
     const close = () => { menu.classList.remove(CONFIG.classes.dropdownOpen); setAriaExpanded(toggle, false); };
@@ -203,33 +242,29 @@
   };
 
   // ---------------------------
-  // 5) Language (EN/ES) - FIXED dropdown control (independent of header DOM)
-  // Direct truth: ES is a later project for full-page copy. This control sets state + HQ Guide strings.
+  // 5) Language state (EN/ES) — LEFT pill is primary (no duplicate controls)
+  // Direct truth: ES full-page translation is later. This controls state + HQ Guide strings.
   // ---------------------------
   const I18N = {
     en: {
-      nav_signal: 'SIGNAL MAP',
-      nav_contact: 'CONTACT',
-      nav_divisions: 'DIVISIONS',
       asst_title: CONFIG.brandAssistantName,
       asst_prompt: 'Where should I take you?',
-      asst_hint: 'Try: “signal map”, “contact”, or “divisions”.',
       close: 'Close',
+      nav_signal: 'Signal Map',
+      nav_contact: 'Contact',
+      nav_divisions: 'Divisions',
       send: 'Send',
-      div_hint: 'Use “Eclipse Divisions” in the top navigation.',
       help_hint: 'I can take you to: “signal map”, “contact”, or “divisions”.'
     },
     es: {
-      nav_signal: 'MAPA DE SEÑALES',
-      nav_contact: 'CONTACTO',
-      nav_divisions: 'DIVISIONES',
       asst_title: CONFIG.brandAssistantName,
       asst_prompt: '¿A dónde quieres ir?',
-      asst_hint: 'Prueba: “mapa de señales”, “contacto”, o “divisiones”.',
       close: 'Cerrar',
+      nav_signal: 'Mapa',
+      nav_contact: 'Contacto',
+      nav_divisions: 'Divisiones',
       send: 'Enviar',
-      div_hint: 'Usa “Eclipse Divisions” en la navegación superior.',
-      help_hint: 'Puedo llevarte a: “mapa de señales”, “contacto”, o “divisiones”.'
+      help_hint: 'Puedo llevarte a: “mapa”, “contacto”, o “divisiones”.'
     }
   };
 
@@ -243,312 +278,151 @@
       setLS(CONFIG.storage.language, safe);
       document.documentElement.setAttribute('lang', safe);
       updateLangChip(safe);
-      updateFixedLangControlLabel(safe);
       document.dispatchEvent(new CustomEvent('eclipse:languagechange', { detail: { lang: safe } }));
     }
   };
 
-  function updateLangChip(lang) {
-    const chip = qs('[data-lang-chip]') || qs('#langChip') || qs('.lang-chip');
-    if (!chip) return;
-    chip.textContent = lang.toUpperCase();
+  function getLangChip() {
+    // Prefer header/nav chip (the left pill)
+    return (
+      qs('header [data-lang-chip], header #langChip, header .lang-chip') ||
+      qs('nav [data-lang-chip], nav #langChip, nav .lang-chip') ||
+      qs('[data-lang-chip]') ||
+      qs('#langChip') ||
+      qs('.lang-chip')
+    );
   }
 
-  function injectFixedLangControl() {
-    if (qs('#eclipseLangCtl')) return;
+  function updateLangChip(lang) {
+    const chip = getLangChip();
+    if (!chip) return;
+    chip.textContent = (lang || 'en').toUpperCase();
+    chip.style.cursor = 'pointer';
+    chip.style.userSelect = 'none';
+    chip.setAttribute('role', 'button');
+    chip.setAttribute('tabindex', '0');
+    chip.setAttribute('aria-haspopup', 'menu');
+    chip.setAttribute('aria-label', 'Language');
+  }
 
-    const styleId = 'eclipse-langctl-styles';
+  function injectLangDropdownOnChip() {
+    // Only one menu, attached to the LEFT pill.
+    if (qs('#langMenu')) return;
+
+    const chip = getLangChip();
+    if (!chip) return;
+
+    // Ensure chip is actually clickable (in case header overlays steal pointer events)
+    const styleId = 'lang-chip-fix-styles';
     if (!qs('#' + styleId)) {
       const s = document.createElement('style');
       s.id = styleId;
       s.textContent = `
-        #eclipseLangCtl{
-          position:fixed;
-          top: calc(env(safe-area-inset-top, 0px) + 14px);
-          right: 14px;
-          z-index: 10000;
-          font-family: inherit;
+        [data-lang-chip], #langChip, .lang-chip{
+          position: relative !important;
+          z-index: 10001 !important;
+          pointer-events: auto !important;
         }
-        @media (max-width: 720px){
-          #eclipseLangCtl{
-            top: calc(env(safe-area-inset-top, 0px) + 64px);
-          }
-        }
-        .ecl-lang-btn{
-          display:flex; align-items:center; gap:8px;
-          background: rgba(6,10,26,0.86);
-          border: 1px solid rgba(255,255,255,0.14);
-          color: rgba(255,255,255,0.92);
-          padding: 8px 10px;
-          border-radius: 999px;
-          cursor: pointer;
-          box-shadow: 0 18px 48px rgba(0,0,0,0.45);
-          backdrop-filter: blur(10px);
-          user-select:none;
-          font-size: 12px;
-          letter-spacing: 0.3px;
-        }
-        .ecl-lang-caret{ opacity:0.75; font-size: 12px; transform: translateY(-1px); }
-        .ecl-lang-menu{
-          position:absolute;
-          top: 44px;
+        .lang-menu{
+          position: absolute;
+          top: calc(100% + 10px);
           right: 0;
           min-width: 120px;
           background: rgba(6,10,26,0.92);
           border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 14px;
+          border-radius: 12px;
           box-shadow: 0 18px 48px rgba(0,0,0,0.45);
           backdrop-filter: blur(10px);
           padding: 6px;
-          display:none;
+          display: none;
+          z-index: 10002;
         }
-        .ecl-lang-menu.is-open{ display:block; }
-        .ecl-lang-item{
-          width:100%;
-          display:flex;
-          justify-content:space-between;
+        .lang-menu.is-open{ display:block; }
+        .lang-item{
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
           padding: 10px 10px;
-          border-radius: 12px;
+          border-radius: 10px;
           border: 1px solid transparent;
           background: transparent;
           color: rgba(255,255,255,0.90);
-          cursor:pointer;
+          cursor: pointer;
           font-size: 12px;
         }
-        .ecl-lang-item:hover{
+        .lang-item:hover{
           background: rgba(255,255,255,0.06);
           border-color: rgba(255,255,255,0.12);
         }
-        .ecl-lang-kbd{ opacity:0.6; font-size: 11px; }
+        .lang-kbd{ opacity:0.6; font-size:11px; }
       `.trim();
       document.head.appendChild(s);
     }
 
-    const ctl = document.createElement('div');
-    ctl.id = 'eclipseLangCtl';
-    ctl.innerHTML = `
-      <button id="eclipseLangBtn" class="ecl-lang-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Language">
-        <span id="eclipseLangLbl">EN</span>
-        <span class="ecl-lang-caret">▾</span>
-      </button>
-      <div id="eclipseLangMenu" class="ecl-lang-menu" role="menu">
-        <button class="ecl-lang-item" type="button" data-lang="en" role="menuitem">
-          <span>English</span><span class="ecl-lang-kbd">EN</span>
-        </button>
-        <button class="ecl-lang-item" type="button" data-lang="es" role="menuitem">
-          <span>Español</span><span class="ecl-lang-kbd">ES</span>
-        </button>
-      </div>
+    const parent = chip.parentElement || document.body;
+    parent.style.position = parent.style.position || 'relative';
+
+    const menu = document.createElement('div');
+    menu.id = 'langMenu';
+    menu.className = 'lang-menu';
+    menu.setAttribute('role', 'menu');
+    menu.innerHTML = `
+      <button class="lang-item" type="button" data-lang="en" role="menuitem"><span>English</span><span class="lang-kbd">EN</span></button>
+      <button class="lang-item" type="button" data-lang="es" role="menuitem"><span>Español</span><span class="lang-kbd">ES</span></button>
     `;
-    document.body.appendChild(ctl);
+    parent.appendChild(menu);
 
-    const btn = qs('#eclipseLangBtn');
-    const menu = qs('#eclipseLangMenu');
+    const close = () => menu.classList.remove('is-open');
+    const toggle = () => menu.classList.toggle('is-open');
 
-    const open = () => { menu.classList.add('is-open'); btn?.setAttribute('aria-expanded', 'true'); };
-    const close = () => { menu.classList.remove('is-open'); btn?.setAttribute('aria-expanded', 'false'); };
-    const toggle = () => menu.classList.contains('is-open') ? close() : open();
-
-    safeAddEvent(btn, 'click', (e) => { e.preventDefault(); e.stopPropagation(); toggle(); });
-    safeAddEvent(btn, 'keydown', (e) => {
+    safeAddEvent(chip, 'click', (e) => { e.preventDefault(); e.stopPropagation(); toggle(); });
+    safeAddEvent(chip, 'keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
       if (e.key === 'Escape') close();
     });
 
     safeAddEvent(menu, 'click', (e) => {
-      const item = e.target.closest('[data-lang]');
-      if (!item) return;
-      const lang = item.getAttribute('data-lang');
-      Language.set(lang);
+      const btn = e.target.closest('[data-lang]');
+      if (!btn) return;
+      Language.set(btn.getAttribute('data-lang'));
       close();
     });
 
     safeAddEvent(document, 'click', (e) => {
       const t = e.target;
-      if (ctl.contains(t)) return;
+      if (menu.contains(t) || chip.contains(t)) return;
       close();
     });
 
     safeAddEvent(document, 'keydown', (e) => { if (e.key === 'Escape') close(); });
-
-    updateFixedLangControlLabel(Language.get());
-  }
-
-  function updateFixedLangControlLabel(lang) {
-    const lbl = qs('#eclipseLangLbl');
-    if (!lbl) return;
-    lbl.textContent = (lang || 'en').toUpperCase();
   }
 
   // ---------------------------
-  // 6) HQ Guide DROP-DOWN (locked behavior)
-  // - Every visit, 5s delay, drops down
-  // - Copy: "Where should I take you?"
-  // - Buttons: Signal Map / Contact / Divisions
-  // - Dismiss: no cooldown
+  // Shared navigation actions
   // ---------------------------
-  function injectHqGuideDropStyles() {
-    if (qs('#hq-guide-drop-styles')) return;
+  function scrollToSignalMap() {
+    const el =
+      qs('#signal-map') ||
+      qs('[data-signal-map]') ||
+      qs('#globe') ||
+      qs('#globeViz');
 
-    const s = document.createElement('style');
-    s.id = 'hq-guide-drop-styles';
-    s.textContent = `
-      .hqg-drop{
-        position: fixed;
-        left: 50%;
-        top: calc(env(safe-area-inset-top, 0px) + 14px);
-        transform: translateX(-50%) translateY(-130%);
-        opacity: 0;
-        z-index: 9999;
-        width: min(980px, calc(100vw - 28px));
-        background: rgba(6,10,26,0.92);
-        border: 1px solid rgba(255,255,255,0.14);
-        border-radius: 18px;
-        box-shadow: 0 24px 64px rgba(0,0,0,0.55);
-        backdrop-filter: blur(12px);
-        transition: transform 320ms ease, opacity 320ms ease;
-        overflow: hidden;
-      }
-      @media (max-width: 720px){
-        .hqg-drop{
-          top: calc(env(safe-area-inset-top, 0px) + 64px);
-          width: calc(100vw - 22px);
-        }
-      }
-      .hqg-drop.is-open{
-        transform: translateX(-50%) translateY(0);
-        opacity: 1;
-      }
-      .hqg-inner{
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 14px;
-        align-items: center;
-        padding: 14px 14px 14px 14px;
-        position: relative;
-      }
-      .hqg-accent{
-        position:absolute;
-        left:0; top:0; bottom:0;
-        width: 6px;
-        background: rgba(61,132,245,0.95);
-        box-shadow: 0 0 22px rgba(61,132,245,0.35);
-      }
-      .hqg-title{
-        font-size: 15px;
-        font-weight: 800;
-        letter-spacing: 0.2px;
-        color: rgba(255,255,255,0.96);
-        margin: 0;
-        line-height: 1.2;
-      }
-      .hqg-sub{
-        font-size: 12px;
-        margin: 4px 0 0;
-        opacity: 0.78;
-      }
-      .hqg-actions{
-        display:flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-      }
-      .hqg-btn{
-        padding: 10px 12px;
-        border-radius: 14px;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.14);
-        color: rgba(255,255,255,0.92);
-        cursor: pointer;
-        font-size: 12px;
-        letter-spacing: 0.2px;
-        white-space: nowrap;
-      }
-      .hqg-btn.primary{
-        background: rgba(61,132,245,0.95);
-        border-color: rgba(255,255,255,0.18);
-        color: #fff;
-      }
-      .hqg-btn:hover{
-        filter: brightness(1.06);
-      }
-      .hqg-dismiss{
-        position:absolute;
-        right: 10px;
-        top: 10px;
-        width: 28px;
-        height: 28px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(255,255,255,0.06);
-        color: rgba(255,255,255,0.85);
-        cursor: pointer;
-        line-height: 1;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
-    `.trim();
-    document.head.appendChild(s);
-  }
-
-  function injectHqGuideDrop() {
-    if (qs('#hqGuideDrop')) return;
-
-    injectHqGuideDropStyles();
-
-    const wrap = document.createElement('div');
-    wrap.id = 'hqGuideDrop';
-    wrap.className = 'hqg-drop';
-    wrap.setAttribute('role', 'dialog');
-    wrap.setAttribute('aria-label', CONFIG.brandAssistantName);
-
-    wrap.innerHTML = `
-      <div class="hqg-inner">
-        <div class="hqg-accent" aria-hidden="true"></div>
-
-        <div style="padding-left:10px;">
-          <p class="hqg-title">Where should I take you?</p>
-        </div>
-
-        <div class="hqg-actions" aria-label="HQ Guide actions">
-          <button class="hqg-btn primary" id="hqgGoSignal" type="button">Signal Map</button>
-          <button class="hqg-btn" id="hqgGoContact" type="button">Contact</button>
-          <button class="hqg-btn" id="hqgGoDivisions" type="button">Divisions</button>
-        </div>
-
-        <button class="hqg-dismiss" id="hqgDismiss" type="button" aria-label="Dismiss">×</button>
-      </div>
-    `;
-    document.body.appendChild(wrap);
-
-    const open = () => wrap.classList.add('is-open');
-    const close = () => wrap.classList.remove('is-open');
-
-    const btnSignal = qs('#hqgGoSignal');
-    const btnContact = qs('#hqgGoContact');
-    const btnDiv = qs('#hqgGoDivisions');
-    const btnDismiss = qs('#hqgDismiss');
-
-    safeAddEvent(btnSignal, 'click', () => { close(); scrollToSignalMap(); });
-    safeAddEvent(btnContact, 'click', () => { close(); openContact(); });
-
-    safeAddEvent(btnDiv, 'click', () => {
-      close();
-      // Ensure user sees the nav dropdown area, then open the dropdown.
+    if (!el) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => { openDivisionsMenu(); }, 260);
-    });
+      return false;
+    }
 
-    safeAddEvent(btnDismiss, 'click', () => close());
-    safeAddEvent(document, 'keydown', (e) => { if (e.key === 'Escape') close(); });
+    const section = el.closest('section') || el;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
 
-    // Locked behavior: show after ~5s every visit (no cooldown).
-    setTimeout(() => open(), CONFIG.guideDropDelayMs);
+  function openContact() {
+    window.location.href = CONFIG.contactMailto;
   }
 
   // ---------------------------
-  // 7) HQ Guide widget (existing, preserved) - navigation-only
+  // 6) HQ Guide widget (navigation-only) + AUTO OPEN after 5s (locked)
   // ---------------------------
   function injectAssistantStyles() {
     if (qs('#assistant-styles')) return;
@@ -576,31 +450,30 @@
         backdrop-filter: blur(10px);
         overflow:hidden;
         display:none;
+        transform: translateY(12px);
+        opacity: 0;
+        transition: transform 260ms ease, opacity 260ms ease;
       }
-      .asst-panel.is-open{ display:block; }
+      .asst-panel.is-open{
+        display:block;
+        transform: translateY(0);
+        opacity: 1;
+      }
       .asst-head{ padding:14px 14px 10px; border-bottom:1px solid rgba(255,255,255,0.10); }
-      .asst-title{ font-weight:700; font-size:14px; margin:0; }
+      .asst-title{ font-weight:800; font-size:14px; margin:0; }
       .asst-body{ padding:12px 14px; }
       .asst-msg{ font-size:13px; line-height:1.35; opacity:0.92; margin:0 0 10px; white-space:pre-wrap; }
-      .asst-row{ display:flex; gap:8px; }
-      .asst-in{
-        flex:1; padding:10px 10px; border-radius:12px;
-        background: rgba(255,255,255,0.06);
-        border:1px solid rgba(255,255,255,0.12);
-        color:#fff; outline:none; font-size:13px;
-      }
-      .asst-send{
-        padding:10px 12px; border-radius:12px;
-        background: rgba(61,132,245,0.95);
-        border:1px solid rgba(255,255,255,0.12);
-        color:#fff; font-size:13px; cursor:pointer;
-      }
-      .asst-actions{ display:flex; gap:8px; margin-top:10px; }
+      .asst-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
       .asst-action{
-        padding:8px 10px; border-radius:12px;
+        padding:10px 12px; border-radius:14px;
         background: rgba(255,255,255,0.06);
         border:1px solid rgba(255,255,255,0.12);
-        color:#fff; font-size:12px; cursor:pointer; opacity:0.9;
+        color:#fff; font-size:12px; cursor:pointer; opacity:0.92;
+        white-space: nowrap;
+      }
+      .asst-action.primary{
+        background: rgba(61,132,245,0.95);
+        border-color: rgba(255,255,255,0.14);
       }
       .asst-foot{ padding:10px 14px 14px; display:flex; justify-content:flex-end; }
       .asst-close{
@@ -641,13 +514,10 @@
         <p class="asst-title" id="asstTitle">${t.asst_title}</p>
       </div>
       <div class="asst-body">
-        <p class="asst-msg" id="asstMsg">${t.asst_prompt}\n${t.asst_hint}</p>
-        <div class="asst-row">
-          <input class="asst-in" id="asstInput" placeholder="" />
-          <button class="asst-send" id="asstSend" type="button">${t.send}</button>
-        </div>
+        <p class="asst-msg" id="asstMsg">${t.asst_prompt}</p>
+
         <div class="asst-actions">
-          <button class="asst-action" id="asstGoSignal" type="button">${t.nav_signal}</button>
+          <button class="asst-action primary" id="asstGoSignal" type="button">${t.nav_signal}</button>
           <button class="asst-action" id="asstGoContact" type="button">${t.nav_contact}</button>
           <button class="asst-action" id="asstGoDiv" type="button">${t.nav_divisions}</button>
         </div>
@@ -662,6 +532,10 @@
     const close = () => panel.classList.remove('is-open');
     const toggle = () => panel.classList.toggle('is-open');
 
+    // Expose so we can auto-open reliably
+    window.ECLIPSE_HQ = window.ECLIPSE_HQ || {};
+    window.ECLIPSE_HQ.Assistant = { open, close, toggle };
+
     safeAddEvent(btn, 'click', (e) => { e.preventDefault(); toggle(); });
     safeAddEvent(document, 'keydown', (e) => { if (e.key === 'Escape') close(); });
 
@@ -671,76 +545,48 @@
       close();
     });
 
-    const msg = qs('#asstMsg');
-    const input = qs('#asstInput');
-    const send = qs('#asstSend');
     const goSignal = qs('#asstGoSignal');
     const goContact = qs('#asstGoContact');
     const goDiv = qs('#asstGoDiv');
     const closeBtn = qs('#asstClose');
-
-    const respond = (text) => {
-      const langNow = Language.get();
-      const tt = I18N[langNow] || I18N.en;
-      const s = (text || '').toLowerCase();
-
-      if (s.includes('signal') || s.includes('mapa') || s.includes('señal') || s.includes('senal')) {
-        close();
-        scrollToSignalMap();
-        return;
-      }
-
-      if (s.includes('contact') || s.includes('contacto') || s.includes('email') || s.includes('mail')) {
-        close();
-        openContact();
-        return;
-      }
-
-      if (s.includes('division') || s.includes('divisions') || s.includes('divisiones')) {
-        close();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => { openDivisionsMenu(); }, 260);
-        return;
-      }
-
-      if (msg) msg.textContent = tt.help_hint;
-    };
-
-    safeAddEvent(send, 'click', () => {
-      const v = (input?.value || '').trim();
-      if (!v) return;
-      if (input) input.value = '';
-      respond(v);
-    });
-
-    safeAddEvent(input, 'keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const v = (input?.value || '').trim();
-        if (!v) return;
-        if (input) input.value = '';
-        respond(v);
-      }
-    });
+    const msg = qs('#asstMsg');
 
     safeAddEvent(goSignal, 'click', () => { close(); scrollToSignalMap(); });
     safeAddEvent(goContact, 'click', () => { close(); openContact(); });
-    safeAddEvent(goDiv, 'click', () => { close(); window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => openDivisionsMenu(), 260); });
+
+    safeAddEvent(goDiv, 'click', () => {
+      close();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => { openDivisionsMenuRobust(); }, 260);
+    });
+
     safeAddEvent(closeBtn, 'click', () => close());
 
-    // Update panel copy on language change
+    // Update assistant strings on language change
     safeAddEvent(document, 'eclipse:languagechange', () => {
       const lng = Language.get();
       const tt = I18N[lng] || I18N.en;
+
       const title = qs('#asstTitle');
       if (title) title.textContent = tt.asst_title;
+      if (msg) msg.textContent = tt.asst_prompt;
       if (goSignal) goSignal.textContent = tt.nav_signal;
       if (goContact) goContact.textContent = tt.nav_contact;
       if (goDiv) goDiv.textContent = tt.nav_divisions;
-      if (send) send.textContent = tt.send;
       if (closeBtn) closeBtn.textContent = tt.close;
-      if (msg) msg.textContent = `${tt.asst_prompt}\n${tt.asst_hint}`;
     });
+  }
+
+  // Locked: every visit, 5 second delay, opens (no cooldown)
+  function initAssistantAutoOpen() {
+    setTimeout(() => {
+      const asst = window.ECLIPSE_HQ?.Assistant;
+      if (asst && typeof asst.open === 'function') asst.open();
+      else {
+        // If UI hasn't mounted yet for some reason, try once more shortly.
+        setTimeout(() => window.ECLIPSE_HQ?.Assistant?.open?.(), 400);
+      }
+    }, CONFIG.guideAutoOpenDelayMs);
   }
 
   // Light mode hooks reserved
@@ -761,13 +607,13 @@
   window.ECLIPSE_HQ.Language = Language;
 
   onReady(() => {
+    cleanupInjected();
+
     const lang = Language.get();
     document.documentElement.setAttribute('lang', lang);
-    updateLangChip(lang);
 
-    // NEW: fixed language dropdown (works even if header pill is broken)
-    injectFixedLangControl();
-    updateFixedLangControlLabel(lang);
+    updateLangChip(lang);
+    injectLangDropdownOnChip();
 
     initGlobeAutoload();
     initDivisionsDropdown();
@@ -775,8 +621,6 @@
     initFooterYear();
 
     injectAssistantUI();
-
-    // NEW: HQ Guide top drop-down overlay (locked behavior)
-    injectHqGuideDrop();
+    initAssistantAutoOpen();
   });
 })();

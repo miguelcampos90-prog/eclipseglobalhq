@@ -416,19 +416,105 @@ const label = `${labelCore} — ${from.label} → ${to.label}`
         controls.enableRotate = true; // draggable
       }
     } catch (_) {}
-// Pause rotation on hover (makes tooltips usable)
+// Hover pauses rotation; click pins a tooltip until click-away or Esc
 try {
   const controls = globe.controls();
+
+  // Create a pinned tooltip element (no CSS file needed)
+  const tip = document.createElement("div");
+  tip.setAttribute("data-eclipse-pinned-tip", "1");
+  tip.style.position = "absolute";
+  tip.style.left = "1.25rem";
+  tip.style.bottom = "1.25rem";
+  tip.style.zIndex = "6";
+  tip.style.display = "none";
+  tip.style.maxWidth = "min(520px, calc(100% - 2.5rem))";
+  tip.style.padding = "0.55rem 0.7rem";
+  tip.style.border = "1px solid rgba(255,255,255,0.14)";
+  tip.style.borderRadius = "999px";
+  tip.style.background = "rgba(0,0,0,0.48)";
+  tip.style.backdropFilter = "blur(10px)";
+  tip.style.webkitBackdropFilter = "blur(10px)";
+  tip.style.color = "rgba(255,255,255,0.88)";
+  tip.style.fontSize = "0.85rem";
+  tip.style.letterSpacing = "0.2px";
+  tip.style.pointerEvents = "none"; // never blocks globe interaction
+
+  // Attach it to the hero section so absolute positioning works
+  const hero = document.querySelector("section#home.hero-globe") || mount.parentElement;
+  if (hero && !hero.querySelector('[data-eclipse-pinned-tip="1"]')) {
+    // Ensure hero is a positioning context
+    const heroPos = window.getComputedStyle(hero).position;
+    if (heroPos === "static") hero.style.position = "relative";
+    hero.appendChild(tip);
+  }
+
+  let pinned = null;
+  let lastArcClickTs = 0;
+  let lastPointClickTs = 0;
+
+  const setPinned = (label) => {
+    if (!label) {
+      tip.style.display = "none";
+      tip.textContent = "";
+      pinned = null;
+      if (controls) controls.autoRotate = true;
+      return;
+    }
+    pinned = label;
+    tip.textContent = label;
+    tip.style.display = "block";
+    if (controls) controls.autoRotate = false;
+  };
+
+  // Hover behavior: only affects rotation when NOT pinned
   globe
     .onPointHover((d) => {
       if (!controls) return;
-      controls.autoRotate = !d; // pause when hovering a point
+      if (pinned) return; // pinned wins
+      controls.autoRotate = !d;
     })
     .onArcHover((d) => {
       if (!controls) return;
-      controls.autoRotate = !d; // pause when hovering an arc
+      if (pinned) return; // pinned wins
+      controls.autoRotate = !d;
     });
+
+  // Click to pin/unpin (arc)
+  globe.onArcClick((d) => {
+    lastArcClickTs = Date.now();
+    const label = d?._label || "";
+    if (!label) return;
+
+    // Toggle if same label is already pinned
+    if (pinned === label) setPinned(null);
+    else setPinned(label);
+  });
+
+  // Click to pin/unpin (point)
+  globe.onPointClick((d) => {
+    lastPointClickTs = Date.now();
+    const label = d?._label || "";
+    if (!label) return;
+
+    if (pinned === label) setPinned(null);
+    else setPinned(label);
+  });
+
+  // Click-away (canvas) to clear pin — but ignore immediate arc/point clicks
+  mount.addEventListener("click", () => {
+    const now = Date.now();
+    if (now - lastArcClickTs < 150) return;
+    if (now - lastPointClickTs < 150) return;
+    if (pinned) setPinned(null);
+  });
+
+  // Esc clears pin
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && pinned) setPinned(null);
+  });
 } catch (_) {}
+
 
     // Size + initial view
     const resize = () => {

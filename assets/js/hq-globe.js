@@ -282,61 +282,57 @@ async function fetchSignalsHqPublic() {
     return CFG.palette.hq;
   }
 
-  function buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope) {
-    const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
-    const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
+ function buildSignalEndpointDots(regionsEnvelope, signalsEnvelope) {
+  const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
+  const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
 
-    // Region index: region_id -> {lat,lng,label}
-    const regionIndex = new Map();
-    regions.forEach((r) => {
-      const id = (r?.region_id ?? r?.regionId ?? "").toString();
-      const lat = toLat(r);
-      const lng = toLng(r);
-      const active = (typeof r?.active === "boolean") ? r.active : true;
-      if (!id || lat == null || lng == null || !active) return;
+  const regionIndex = new Map();
+  regions.forEach((r) => {
+    const id = (r?.region_id ?? r?.regionId ?? "").toString();
+    const lat = toLat(r);
+    const lng = toLng(r);
+    const active = (typeof r?.active === "boolean") ? r.active : true;
+    if (!id || lat == null || lng == null || !active) return;
+    regionIndex.set(id, { label: r?.label || id, lat, lng });
+  });
 
-      regionIndex.set(id, {
-        label: r?.label || id,
-        lat,
-        lng
-      });
-    });
+  const seen = new Set();
+  const dots = [];
 
-    const arcs = [];
-    signals.forEach((s) => {
-      const active = (typeof s?.active === "boolean") ? s.active : true;
-      if (!active) return;
+  signals.forEach((s) => {
+    const active = (typeof s?.active === "boolean") ? s.active : true;
+    if (!active) return;
+    if (typeof s?.share_public === "boolean" && s.share_public === false) return;
 
-      // respect public-sharing flag if present
-      if (typeof s?.share_public === "boolean" && s.share_public === false) return;
+    const status = (s?.status || "").toString().trim();
+    const color = statusToColor(status);
 
-      const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
-      const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
-      const from = regionIndex.get(fromId);
-      const to = regionIndex.get(toId);
-      if (!from || !to) return;
+    const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
+    const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
 
-      const status = (s?.status || "").toString().trim();
-      const color = statusToColor(status);
+    const addDot = (id, kind) => {
+      const reg = regionIndex.get(id);
+      if (!reg) return;
+      const key = `${id}:${kind}`;
+      if (seen.has(key)) return;
+      seen.add(key);
 
-      const labelCore = s?.label_public || "Route";
-      const label = `${labelCore} — ${from.label} → ${to.label}${status ? ` (${status})` : ""}`;
-
-      arcs.push({
-        ...s,
-        _startLat: from.lat,
-        _startLng: from.lng,
-        _endLat: to.lat,
-        _endLng: to.lng,
+      dots.push({
+        _lat: reg.lat,
+        _lng: reg.lng,
         _color: color,
-        _alt: 0.25,
-        _stroke: 0.9,
-        _label: label
+        _radius: kind === "to" ? 0.25 : 0.22,
+        _alt: 0.02,
+        _label: `${reg.label}${status ? ` (${status})` : ""}`
       });
-    });
+    };
 
-    return arcs;
-  }
+    addDot(fromId, "from");
+    addDot(toId, "to");
+  });
+
+  return dots;
+}
   function disableUserDrag(mount) {
     const canvas = mount.querySelector("canvas");
     if (!canvas) return;

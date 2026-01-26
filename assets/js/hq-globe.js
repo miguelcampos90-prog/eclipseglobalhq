@@ -462,14 +462,21 @@ globe.pointOfView({ lat: 33.4484, lng: -112.0740, altitude: 1.9 }, 0);
     let pointsData = [];
     let arcsData = []; // Step 2 will wire public signals into arcs
     try {
-     const [regionsEnvelope, assetsEnvelope, signalsEnvelope] = await Promise.all([
+const [regionsEnvelope, assetsEnvelope] = await Promise.all([
   fetchRegions(),
-  fetchAssets(),
-  fetchSignalsHqPublic()
+  fetchAssets()
 ]);
 
 pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
-arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
+
+// Fetch signals separately so a signals hiccup never forces the whole globe into fallback mode
+try {
+  const signalsEnvelope = await fetchSignalsHqPublic();
+  arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
+} catch (err) {
+  console.warn("[ECLIPSE] Public signals fetch failed; continuing without arcs.", err);
+  arcsData = [];
+}
     } catch (err) {
       console.warn("[ECLIPSE] Public feeds failed; falling back to local demo map.", err);
 

@@ -457,104 +457,38 @@ globe.pointOfView({ lat: 33.4484, lng: -112.0740, altitude: 1.9 }, 0);
       console.log("[ECLIPSE] Feeds manifest:", man);
     } catch (_) {}
 
-    // STEP 1: Load PUBLIC feeds (regions + assets) and render HQ marker
-    let pointsData = [];
-    let arcsData = []; // Step 2 will wire public signals into arcs
-    try {
-const [regionsEnvelope, assetsEnvelope] = await Promise.all([
-  fetchRegions(),
-  fetchAssets()
-]);
+// === BEGIN LIVE FEEDS (regions/assets/signals) ===
+let pointsData = [];
+let arcsData = [];
 
-pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
-
-// Fetch signals separately so a signals hiccup never forces the whole globe into fallback mode
 try {
-  const signalsEnvelope = await fetchSignalsHqPublic();
-  arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
+  const [regionsEnvelope, assetsEnvelope] = await Promise.all([
+    fetchRegions(),
+    fetchAssets()
+  ]);
+
+  pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
+
+  try {
+    const signalsEnvelope = await fetchSignalsHqPublic();
+    arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
+  } catch (err) {
+    console.warn("[ECLIPSE] LIVE signals failed; arcs disabled.", err);
+    arcsData = [];
+  }
+
+  console.log("[ECLIPSE] DATA MODE: LIVE", {
+    points: pointsData.length,
+    arcs: arcsData.length,
+    sampleArcColor: arcsData[0]?._color,
+    sampleArcLabel: arcsData[0]?._label
+  });
 } catch (err) {
-  console.warn("[ECLIPSE] Public signals fetch failed; continuing without arcs.", err);
+  console.error("[ECLIPSE] LIVE feeds failed. No fallback used.", err);
+  pointsData = [];
   arcsData = [];
 }
-    } catch (err) {
-      console.warn("[ECLIPSE] Public feeds failed; falling back to local demo map.", err);
-
-      // Fallback: local signal map file
-      try {
-        const raw = await fetchSignalMapFallback();
-        const norm = normalizeSignalMap(raw);
-        const points = norm.points || [];
-        const arcs = norm.arcs || [];
-
-        pointsData = (points || [])
-          .filter(regionOnly)
-          .map((p) => {
-            const lat = toLat(p);
-            const lng = toLng(p);
-            if (lat == null || lng == null) return null;
-
-            const divKey = pickDivisionKey(p);
-            const color = CFG.palette[divKey] || CFG.palette.neutral;
-
-            const label =
-              p?.label ||
-              p?.name ||
-              p?.title ||
-              `${(p?.division || p?.type || "Node").toString()}`;
-
-            let keep = true;
-            if (divKey === "transport") {
-              const age = p?.monthsAgo ?? p?.ageMonths ?? null;
-              if (typeof age === "number") keep = age <= CFG.transportRollingMonths;
-            }
-            if (divKey === "properties") {
-              if (typeof p?.owned === "boolean") keep = p.owned === true;
-              if (typeof p?.isOwned === "boolean") keep = p.isOwned === true;
-              if (typeof p?.status === "string") {
-                const s = p.status.toLowerCase();
-                if (s.includes("owned") === false) keep = false;
-              }
-            }
-            if (!keep) return null;
-
-            return {
-              ...p,
-              _lat: lat,
-              _lng: lng,
-              _color: color,
-              _label: label,
-              _radius: 0.28
-            };
-          })
-          .filter(Boolean);
-
-        arcsData = (arcs || [])
-          .map((a) => {
-            const sLat = arcStartLat(a);
-            const sLng = arcStartLng(a);
-            const eLat = arcEndLat(a);
-            const eLng = arcEndLng(a);
-            if ([sLat, sLng, eLat, eLng].some((v) => typeof v !== "number")) return null;
-
-            const divKey = pickDivisionKey(a);
-            const color = CFG.palette[divKey] || "rgba(255,255,255,0.35)";
-
-            return {
-              ...a,
-              _startLat: sLat,
-              _startLng: sLng,
-              _endLat: eLat,
-              _endLng: eLng,
-              _color: color,
-              _alt: a?.altitude ?? 0.25,
-              _stroke: a?.stroke ?? 0.6
-            };
-          })
-          .filter(Boolean);
-      } catch (fallbackErr) {
-        console.warn("[ECLIPSE] Fallback map also failed; rendering globe without points/arcs.", fallbackErr);
-      }
-    }
+// === END LIVE FEEDS ===
 
     globe.pointsData(pointsData);
     globe.arcsData(arcsData);

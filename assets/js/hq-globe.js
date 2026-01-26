@@ -326,7 +326,7 @@
         _lat: reg.lat,
         _lng: reg.lng,
         _color: color,
-        _radius: 0.25,
+        _radius: 0.33,
         _alt: 0.02,
         _label: `${reg.label}${status ? ` (${status})` : ""}`
       });

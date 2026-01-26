@@ -359,7 +359,7 @@
         controls.autoRotateSpeed = CFG.autoRotateSpeed;
         controls.enablePan = false;
         controls.enableZoom = false;
-        controls.enableRotate = false;
+        controls.enableRotate = true;
       }
     } catch (_) {}
 
@@ -373,8 +373,8 @@
     };
     window.addEventListener("resize", resize);
     resize();
-
-    setTimeout(() => disableUserDrag(mount), 0);
+    // Start view focused on North America / US
+globe.pointOfView({ lat: 33.4484, lng: -112.0740, altitude: 1.9 }, 0);
 
     // Load countries borders (non-fatal)
     try {

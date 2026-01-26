@@ -416,6 +416,19 @@ const label = `${labelCore} — ${from.label} → ${to.label}`
         controls.enableRotate = true; // draggable
       }
     } catch (_) {}
+// Pause rotation on hover (makes tooltips usable)
+try {
+  const controls = globe.controls();
+  globe
+    .onPointHover((d) => {
+      if (!controls) return;
+      controls.autoRotate = !d; // pause when hovering a point
+    })
+    .onArcHover((d) => {
+      if (!controls) return;
+      controls.autoRotate = !d; // pause when hovering an arc
+    });
+} catch (_) {}
 
     // Size + initial view
     const resize = () => {

@@ -272,72 +272,71 @@ async function fetchSignalsHqPublic() {
     });
 
     return points;
-    function statusToColor(statusRaw) {
-  const s = (statusRaw || "").toString().toLowerCase();
-  if (s.includes("in transit")) return CFG.palette.transport;
-  if (s.includes("completed")) return CFG.palette.neutral;
-  if (s.includes("owned")) return CFG.palette.properties;
-  return CFG.palette.hq;
-}
-
-function buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope) {
-  const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
-  const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
-
-  // Region index: region_id -> {lat,lng,label}
-  const regionIndex = new Map();
-  regions.forEach((r) => {
-    const id = (r?.region_id ?? r?.regionId ?? "").toString();
-    const lat = toLat(r);
-    const lng = toLng(r);
-    const active = (typeof r?.active === "boolean") ? r.active : true;
-    if (!id || lat == null || lng == null || !active) return;
-
-    regionIndex.set(id, {
-      label: r?.label || id,
-      lat,
-      lng
-    });
-  });
-
-  const arcs = [];
-  signals.forEach((s) => {
-    const active = (typeof s?.active === "boolean") ? s.active : true;
-    if (!active) return;
-
-    // respect public-sharing flag if present
-    if (typeof s?.share_public === "boolean" && s.share_public === false) return;
-
-    const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
-    const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
-    const from = regionIndex.get(fromId);
-    const to = regionIndex.get(toId);
-    if (!from || !to) return;
-
-    const status = (s?.status || "").toString().trim();
-    const color = statusToColor(status);
-
-    const labelCore = s?.label_public || "Route";
-    const label = `${labelCore} — ${from.label} → ${to.label}${status ? ` (${status})` : ""}`;
-
-    arcs.push({
-      ...s,
-      _startLat: from.lat,
-      _startLng: from.lng,
-      _endLat: to.lat,
-      _endLng: to.lng,
-      _color: color,
-      _alt: 0.25,
-      _stroke: 0.9,
-      _label: label
-    });
-  });
-
-  return arcs;
-}
-
   }
 
+  function statusToColor(statusRaw) {
+    const s = (statusRaw || "").toString().toLowerCase();
+    if (s.includes("in transit")) return CFG.palette.transport;
+    if (s.includes("completed")) return CFG.palette.neutral;
+    if (s.includes("owned")) return CFG.palette.properties;
+    return CFG.palette.hq;
+  }
+
+  function buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope) {
+    const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
+    const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
+
+    // Region index: region_id -> {lat,lng,label}
+    const regionIndex = new Map();
+    regions.forEach((r) => {
+      const id = (r?.region_id ?? r?.regionId ?? "").toString();
+      const lat = toLat(r);
+      const lng = toLng(r);
+      const active = (typeof r?.active === "boolean") ? r.active : true;
+      if (!id || lat == null || lng == null || !active) return;
+
+      regionIndex.set(id, {
+        label: r?.label || id,
+        lat,
+        lng
+      });
+    });
+
+    const arcs = [];
+    signals.forEach((s) => {
+      const active = (typeof s?.active === "boolean") ? s.active : true;
+      if (!active) return;
+
+      // respect public-sharing flag if present
+      if (typeof s?.share_public === "boolean" && s.share_public === false) return;
+
+      const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
+      const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
+      const from = regionIndex.get(fromId);
+      const to = regionIndex.get(toId);
+      if (!from || !to) return;
+
+      const status = (s?.status || "").toString().trim();
+      const color = statusToColor(status);
+
+      const labelCore = s?.label_public || "Route";
+      const label = `${labelCore} — ${from.label} → ${to.label}${status ? ` (${status})` : ""}`;
+
+      arcs.push({
+        ...s,
+        _startLat: from.lat,
+        _startLng: from.lng,
+        _endLat: to.lat,
+        _endLng: to.lng,
+        _color: color,
+        _alt: 0.25,
+        _stroke: 0.9,
+        _label: label
+      });
+    });
+
+    return arcs;
+  }
   function disableUserDrag(mount) {
     const canvas = mount.querySelector("canvas");
     if (!canvas) return;

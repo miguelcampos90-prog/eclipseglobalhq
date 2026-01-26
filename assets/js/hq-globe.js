@@ -141,7 +141,9 @@
   async function fetchAssets() {
     return fetchJson(absFeedUrl(CFG.feeds.assets));
   }
-
+async function fetchSignalsHqPublic() {
+  return fetchJson(absFeedUrl(CFG.feeds.signalsHqPublic));
+}
   async function fetchManifest() {
     return fetchJson(absFeedUrl(CFG.feeds.manifest));
   }
@@ -270,6 +272,70 @@
     });
 
     return points;
+    function statusToColor(statusRaw) {
+  const s = (statusRaw || "").toString().toLowerCase();
+  if (s.includes("in transit")) return CFG.palette.transport;
+  if (s.includes("completed")) return CFG.palette.neutral;
+  if (s.includes("owned")) return CFG.palette.properties;
+  return CFG.palette.hq;
+}
+
+function buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope) {
+  const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
+  const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
+
+  // Region index: region_id -> {lat,lng,label}
+  const regionIndex = new Map();
+  regions.forEach((r) => {
+    const id = (r?.region_id ?? r?.regionId ?? "").toString();
+    const lat = toLat(r);
+    const lng = toLng(r);
+    const active = (typeof r?.active === "boolean") ? r.active : true;
+    if (!id || lat == null || lng == null || !active) return;
+
+    regionIndex.set(id, {
+      label: r?.label || id,
+      lat,
+      lng
+    });
+  });
+
+  const arcs = [];
+  signals.forEach((s) => {
+    const active = (typeof s?.active === "boolean") ? s.active : true;
+    if (!active) return;
+
+    // respect public-sharing flag if present
+    if (typeof s?.share_public === "boolean" && s.share_public === false) return;
+
+    const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
+    const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
+    const from = regionIndex.get(fromId);
+    const to = regionIndex.get(toId);
+    if (!from || !to) return;
+
+    const status = (s?.status || "").toString().trim();
+    const color = statusToColor(status);
+
+    const labelCore = s?.label_public || "Route";
+    const label = `${labelCore} — ${from.label} → ${to.label}${status ? ` (${status})` : ""}`;
+
+    arcs.push({
+      ...s,
+      _startLat: from.lat,
+      _startLng: from.lng,
+      _endLat: to.lat,
+      _endLng: to.lng,
+      _color: color,
+      _alt: 0.25,
+      _stroke: 0.9,
+      _label: label
+    });
+  });
+
+  return arcs;
+}
+
   }
 
   function disableUserDrag(mount) {
@@ -341,6 +407,7 @@
         .arcEndLat((d) => d._endLat)
         .arcEndLng((d) => d._endLng)
         .arcColor((d) => d._color)
+        .arcLabel((d) => d._label || "")
         .arcAltitude((d) => d._alt ?? 0.25)
         .arcStroke((d) => d._stroke ?? 0.6)
         .arcDashLength(0.55)
@@ -395,8 +462,14 @@ globe.pointOfView({ lat: 33.4484, lng: -112.0740, altitude: 1.9 }, 0);
     let pointsData = [];
     let arcsData = []; // Step 2 will wire public signals into arcs
     try {
-      const [regionsEnvelope, assetsEnvelope] = await Promise.all([fetchRegions(), fetchAssets()]);
-      pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
+     const [regionsEnvelope, assetsEnvelope, signalsEnvelope] = await Promise.all([
+  fetchRegions(),
+  fetchAssets(),
+  fetchSignalsHqPublic()
+]);
+
+pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
+arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
     } catch (err) {
       console.warn("[ECLIPSE] Public feeds failed; falling back to local demo map.", err);
 

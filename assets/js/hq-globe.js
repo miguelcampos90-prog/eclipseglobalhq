@@ -270,7 +270,10 @@
       const color = statusToColor(status);
 
       const labelCore = s?.label_public || "Route";
-      const label = `${labelCore} — ${from.label} → ${to.label}${status ? ` (${status})` : ""}`;
+const id = (s?.signal_id || s?.signalId || "").toString().trim();
+const label = `${labelCore} — ${from.label} → ${to.label}`
+  + `${status ? ` • ${status}` : ""}`
+  + `${id ? ` • ${id}` : ""}`;
 
       arcs.push({
         ...s,

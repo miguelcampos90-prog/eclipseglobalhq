@@ -215,74 +215,62 @@ async function fetchSignalsHqPublic() {
     return "neutral";
   }
 
-  function buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope) {
-    const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
-    const assets = normalizeArrayEnvelope(assetsEnvelope, "assets");
+function statusToColor(statusRaw) {
+  const s = (statusRaw || "").toString().toLowerCase();
+  if (s.includes("in transit")) return CFG.palette.transport;
+  if (s.includes("completed")) return CFG.palette.neutral;
+  if (s.includes("owned")) return CFG.palette.properties;
+  return CFG.palette.hq;
+}
 
-    const regionIndex = new Map();
-    regions.forEach((r) => {
-      const lat = toLat(r);
-      const lng = toLng(r);
-      const id = (r?.region_id ?? r?.regionId ?? "").toString();
-      if (!id || lat == null || lng == null) return;
-      const active = (typeof r?.active === "boolean") ? r.active : true;
-      if (!active) return;
-      regionIndex.set(id, {
-        region_id: id,
-        label: r?.label || id,
-        lat,
-        lng,
-        tier: r?.tier || ""
-      });
+function buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope) {
+  const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
+  const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
+
+  const regionIndex = new Map();
+  regions.forEach((r) => {
+    const id = (r?.region_id ?? r?.regionId ?? "").toString();
+    const lat = toLat(r);
+    const lng = toLng(r);
+    const active = (typeof r?.active === "boolean") ? r.active : true;
+    if (!id || lat == null || lng == null || !active) return;
+    regionIndex.set(id, { label: r?.label || id, lat, lng });
+  });
+
+  const arcs = [];
+  signals.forEach((s) => {
+    const active = (typeof s?.active === "boolean") ? s.active : true;
+    if (!active) return;
+    if (typeof s?.share_public === "boolean" && s.share_public === false) return;
+
+    const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
+    const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
+    const from = regionIndex.get(fromId);
+    const to = regionIndex.get(toId);
+    if (!from || !to) return;
+
+    const status = (s?.status || "").toString().trim();
+    const color = statusToColor(status);
+    const labelCore = s?.label_public || "Route";
+    const label = `${labelCore} — ${from.label} → ${to.label}${status ? ` (${status})` : ""}`;
+
+    arcs.push({
+      ...s,
+      _startLat: from.lat,
+      _startLng: from.lng,
+      _endLat: to.lat,
+      _endLng: to.lng,
+      _color: color,
+      _alt: 0.25,
+      _stroke: 0.9,
+      _label: label
     });
+  });
 
-    const points = [];
-    assets.forEach((a) => {
-      const active = (typeof a?.active === "boolean") ? a.active : true;
-      if (!active) return;
+  return arcs;
+}
 
-      const regionId = (a?.region_id ?? a?.regionId ?? "").toString();
-      const reg = regionIndex.get(regionId);
-      if (!reg) return;
-
-      const paletteKey = categoryToPaletteKey(a?.category);
-      const color = CFG.palette[paletteKey] || CFG.palette.neutral;
-
-      const label =
-        a?.label ||
-        a?.label_public ||
-        a?.name ||
-        a?.asset_id ||
-        a?.assetId ||
-        "Asset";
-
-      const status = (a?.status || "").toString().trim();
-      const fullLabel = `${label}${status ? ` — ${status}` : ""} (${reg.label})`;
-
-      const isHq = paletteKey === "hq";
-      points.push({
-        ...a,
-        _lat: reg.lat,
-        _lng: reg.lng,
-        _color: color,
-        _label: fullLabel,
-        _radius: isHq ? 0.55 : 0.35,
-        _alt: isHq ? 0.05 : 0.03
-      });
-    });
-
-    return points;
-  }
-
-  function statusToColor(statusRaw) {
-    const s = (statusRaw || "").toString().toLowerCase();
-    if (s.includes("in transit")) return CFG.palette.transport;
-    if (s.includes("completed")) return CFG.palette.neutral;
-    if (s.includes("owned")) return CFG.palette.properties;
-    return CFG.palette.hq;
-  }
-
- function buildSignalEndpointDots(regionsEnvelope, signalsEnvelope) {
+function buildSignalEndpointDots(regionsEnvelope, signalsEnvelope) {
   const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
   const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
 
@@ -333,6 +321,7 @@ async function fetchSignalsHqPublic() {
 
   return dots;
 }
+
   function disableUserDrag(mount) {
     const canvas = mount.querySelector("canvas");
     if (!canvas) return;

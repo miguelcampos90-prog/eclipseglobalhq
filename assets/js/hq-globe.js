@@ -5,8 +5,18 @@
   // CONFIG (Public-safe defaults)
   // =========================
   const CFG = {
-    // Stable absolute path
-    dataPath: "/assets/data/public_signal_map.json",
+    // FEEDS HOST (public-safe)
+    // Step 1 target: regions + assets (public)
+    feedsBaseUrl: "https://data.eclipseglobalhq.com",
+    feeds: {
+      regions: "/public/regions.json",
+      assets: "/public/assets.json",
+      signalsHqPublic: "/public/signals_hq_public.json",
+      manifest: "/manifest.json"
+    },
+
+    // Local fallback (Plan B if feeds fail)
+    fallbackSignalMapPath: "/assets/data/public_signal_map.json",
 
     // Mobile fallback rule (Plan B)
     mobileMaxWidth: 768,
@@ -118,14 +128,49 @@
     return res.json();
   }
 
-  async function fetchSignalMap() {
-    return fetchJson(CFG.dataPath);
+  function absFeedUrl(path) {
+    if (!path) return CFG.feedsBaseUrl;
+    if (/^https?:\/\//i.test(path)) return path;
+    return `${CFG.feedsBaseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+  }
+
+  async function fetchRegions() {
+    return fetchJson(absFeedUrl(CFG.feeds.regions));
+  }
+
+  async function fetchAssets() {
+    return fetchJson(absFeedUrl(CFG.feeds.assets));
+  }
+
+  async function fetchManifest() {
+    return fetchJson(absFeedUrl(CFG.feeds.manifest));
+  }
+
+  async function fetchSignalMapFallback() {
+    return fetchJson(CFG.fallbackSignalMapPath);
   }
 
   async function fetchCountries() {
     return fetchJson(CFG.countriesGeoJsonUrl);
   }
 
+  function normalizeArrayEnvelope(obj, key) {
+    if (Array.isArray(obj)) return obj;
+    const arr = obj?.[key];
+    return Array.isArray(arr) ? arr : [];
+  }
+
+  function toLat(obj) {
+    const v = obj?.lat ?? obj?.latitude ?? obj?.y;
+    return typeof v === "number" ? v : null;
+  }
+
+  function toLng(obj) {
+    const v = obj?.lng ?? obj?.lon ?? obj?.longitude ?? obj?.x;
+    return typeof v === "number" ? v : null;
+  }
+
+  // ---------- Old (fallback) signal-map shape support ----------
   function normalizeSignalMap(data) {
     let points = data?.points || data?.locations || data?.nodes || data?.hubs || [];
     let arcs = data?.arcs || data?.routes || data?.links || data?.flows || [];
@@ -152,20 +197,80 @@
     return lvl.includes("region");
   }
 
-  function toLat(obj) {
-    const v = obj?.lat ?? obj?.latitude ?? obj?.y;
-    return typeof v === "number" ? v : null;
-  }
-
-  function toLng(obj) {
-    const v = obj?.lng ?? obj?.lon ?? obj?.longitude ?? obj?.x;
-    return typeof v === "number" ? v : null;
-  }
-
   function arcStartLat(a) { return a?.startLat ?? a?.fromLat ?? a?.srcLat ?? null; }
   function arcStartLng(a) { return a?.startLng ?? a?.fromLng ?? a?.fromLon ?? a?.srcLng ?? a?.srcLon ?? null; }
   function arcEndLat(a)   { return a?.endLat   ?? a?.toLat   ?? a?.dstLat ?? null; }
   function arcEndLng(a)   { return a?.endLng   ?? a?.toLng   ?? a?.toLon  ?? a?.dstLng ?? a?.dstLon ?? null; }
+
+  // ---------- Feed → points builder (Step 1 target) ----------
+  function categoryToPaletteKey(categoryRaw) {
+    const c = (categoryRaw || "").toString().toLowerCase();
+    if (c.includes("hq")) return "hq";
+    if (c.includes("transport")) return "transport";
+    if (c.includes("logistics")) return "logistics";
+    if (c.includes("properties")) return "properties";
+    if (c.includes("stone") || c.includes("ember")) return "ember";
+    return "neutral";
+  }
+
+  function buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope) {
+    const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
+    const assets = normalizeArrayEnvelope(assetsEnvelope, "assets");
+
+    const regionIndex = new Map();
+    regions.forEach((r) => {
+      const lat = toLat(r);
+      const lng = toLng(r);
+      const id = (r?.region_id ?? r?.regionId ?? "").toString();
+      if (!id || lat == null || lng == null) return;
+      const active = (typeof r?.active === "boolean") ? r.active : true;
+      if (!active) return;
+      regionIndex.set(id, {
+        region_id: id,
+        label: r?.label || id,
+        lat,
+        lng,
+        tier: r?.tier || ""
+      });
+    });
+
+    const points = [];
+    assets.forEach((a) => {
+      const active = (typeof a?.active === "boolean") ? a.active : true;
+      if (!active) return;
+
+      const regionId = (a?.region_id ?? a?.regionId ?? "").toString();
+      const reg = regionIndex.get(regionId);
+      if (!reg) return;
+
+      const paletteKey = categoryToPaletteKey(a?.category);
+      const color = CFG.palette[paletteKey] || CFG.palette.neutral;
+
+      const label =
+        a?.label ||
+        a?.label_public ||
+        a?.name ||
+        a?.asset_id ||
+        a?.assetId ||
+        "Asset";
+
+      const status = (a?.status || "").toString().trim();
+      const fullLabel = `${label}${status ? ` — ${status}` : ""} (${reg.label})`;
+
+      const isHq = paletteKey === "hq";
+      points.push({
+        ...a,
+        _lat: reg.lat,
+        _lng: reg.lng,
+        _color: color,
+        _label: fullLabel,
+        _radius: isHq ? 0.55 : 0.35,
+        _alt: isHq ? 0.05 : 0.03
+      });
+    });
+
+    return points;
+  }
 
   function disableUserDrag(mount) {
     const canvas = mount.querySelector("canvas");
@@ -280,83 +385,97 @@
       console.warn("[ECLIPSE] Countries layer failed; continuing without borders.", err);
     }
 
-    // Load signal map (non-fatal)
-    let points = [];
-    let arcs = [];
+    // Optional: log manifest (non-fatal)
     try {
-      const raw = await fetchSignalMap();
-      const norm = normalizeSignalMap(raw);
-      points = norm.points;
-      arcs = norm.arcs;
+      const man = await fetchManifest();
+      console.log("[ECLIPSE] Feeds manifest:", man);
+    } catch (_) {}
+
+    // STEP 1: Load PUBLIC feeds (regions + assets) and render HQ marker
+    let pointsData = [];
+    let arcsData = []; // Step 2 will wire public signals into arcs
+    try {
+      const [regionsEnvelope, assetsEnvelope] = await Promise.all([fetchRegions(), fetchAssets()]);
+      pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
     } catch (err) {
-      console.warn("[ECLIPSE] Signal map load failed; rendering globe without points/arcs.", err);
+      console.warn("[ECLIPSE] Public feeds failed; falling back to local demo map.", err);
+
+      // Fallback: local signal map file
+      try {
+        const raw = await fetchSignalMapFallback();
+        const norm = normalizeSignalMap(raw);
+        const points = norm.points || [];
+        const arcs = norm.arcs || [];
+
+        pointsData = (points || [])
+          .filter(regionOnly)
+          .map((p) => {
+            const lat = toLat(p);
+            const lng = toLng(p);
+            if (lat == null || lng == null) return null;
+
+            const divKey = pickDivisionKey(p);
+            const color = CFG.palette[divKey] || CFG.palette.neutral;
+
+            const label =
+              p?.label ||
+              p?.name ||
+              p?.title ||
+              `${(p?.division || p?.type || "Node").toString()}`;
+
+            let keep = true;
+            if (divKey === "transport") {
+              const age = p?.monthsAgo ?? p?.ageMonths ?? null;
+              if (typeof age === "number") keep = age <= CFG.transportRollingMonths;
+            }
+            if (divKey === "properties") {
+              if (typeof p?.owned === "boolean") keep = p.owned === true;
+              if (typeof p?.isOwned === "boolean") keep = p.isOwned === true;
+              if (typeof p?.status === "string") {
+                const s = p.status.toLowerCase();
+                if (s.includes("owned") === false) keep = false;
+              }
+            }
+            if (!keep) return null;
+
+            return {
+              ...p,
+              _lat: lat,
+              _lng: lng,
+              _color: color,
+              _label: label,
+              _radius: 0.28
+            };
+          })
+          .filter(Boolean);
+
+        arcsData = (arcs || [])
+          .map((a) => {
+            const sLat = arcStartLat(a);
+            const sLng = arcStartLng(a);
+            const eLat = arcEndLat(a);
+            const eLng = arcEndLng(a);
+            if ([sLat, sLng, eLat, eLng].some((v) => typeof v !== "number")) return null;
+
+            const divKey = pickDivisionKey(a);
+            const color = CFG.palette[divKey] || "rgba(255,255,255,0.35)";
+
+            return {
+              ...a,
+              _startLat: sLat,
+              _startLng: sLng,
+              _endLat: eLat,
+              _endLng: eLng,
+              _color: color,
+              _alt: a?.altitude ?? 0.25,
+              _stroke: a?.stroke ?? 0.6
+            };
+          })
+          .filter(Boolean);
+      } catch (fallbackErr) {
+        console.warn("[ECLIPSE] Fallback map also failed; rendering globe without points/arcs.", fallbackErr);
+      }
     }
-
-    const pointsData = (points || [])
-      .filter(regionOnly)
-      .map((p) => {
-        const lat = toLat(p);
-        const lng = toLng(p);
-        if (lat == null || lng == null) return null;
-
-        const divKey = pickDivisionKey(p);
-        const color = CFG.palette[divKey] || CFG.palette.neutral;
-
-        const label =
-          p?.label ||
-          p?.name ||
-          p?.title ||
-          `${(p?.division || p?.type || "Node").toString()}`;
-
-        let keep = true;
-        if (divKey === "transport") {
-          const age = p?.monthsAgo ?? p?.ageMonths ?? null;
-          if (typeof age === "number") keep = age <= CFG.transportRollingMonths;
-        }
-        if (divKey === "properties") {
-          if (typeof p?.owned === "boolean") keep = p.owned === true;
-          if (typeof p?.isOwned === "boolean") keep = p.isOwned === true;
-          if (typeof p?.status === "string") {
-            const s = p.status.toLowerCase();
-            if (s.includes("owned") === false) keep = false;
-          }
-        }
-        if (!keep) return null;
-
-        return {
-          ...p,
-          _lat: lat,
-          _lng: lng,
-          _color: color,
-          _label: label,
-          _radius: 0.28
-        };
-      })
-      .filter(Boolean);
-
-    const arcsData = (arcs || [])
-      .map((a) => {
-        const sLat = arcStartLat(a);
-        const sLng = arcStartLng(a);
-        const eLat = arcEndLat(a);
-        const eLng = arcEndLng(a);
-        if ([sLat, sLng, eLat, eLng].some((v) => typeof v !== "number")) return null;
-
-        const divKey = pickDivisionKey(a);
-        const color = CFG.palette[divKey] || "rgba(255,255,255,0.35)";
-
-        return {
-          ...a,
-          _startLat: sLat,
-          _startLng: sLng,
-          _endLat: eLat,
-          _endLng: eLng,
-          _color: color,
-          _alt: a?.altitude ?? 0.25,
-          _stroke: a?.stroke ?? 0.6
-        };
-      })
-      .filter(Boolean);
 
     globe.pointsData(pointsData);
     globe.arcsData(arcsData);

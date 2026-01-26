@@ -465,13 +465,17 @@ try {
 
   pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
 
-  try {
-    const signalsEnvelope = await fetchSignalsHqPublic();
-    arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
-  } catch (err) {
-    console.warn("[ECLIPSE] LIVE signals failed; arcs disabled.", err);
-    arcsData = [];
-  }
+try {
+  const signalsEnvelope = await fetchSignalsHqPublic();
+  arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
+
+  // Add endpoint dots for public signals (so arcs have visible destination points)
+  const endpointDots = buildSignalEndpointDots(regionsEnvelope, signalsEnvelope);
+  pointsData = pointsData.concat(endpointDots);
+} catch (err) {
+  console.warn("[ECLIPSE] LIVE signals failed; arcs+endpoint dots disabled.", err);
+  arcsData = [];
+}
 
   console.log("[ECLIPSE] DATA MODE: LIVE", {
     points: pointsData.length,

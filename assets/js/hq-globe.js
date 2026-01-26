@@ -6,7 +6,6 @@
   // =========================
   const CFG = {
     // FEEDS HOST (public-safe)
-    // Step 1 target: regions + assets (public)
     feedsBaseUrl: "https://data.eclipseglobalhq.com",
     feeds: {
       regions: "/public/regions.json",
@@ -15,27 +14,20 @@
       manifest: "/manifest.json"
     },
 
-    // Local fallback (Plan B if feeds fail)
-    fallbackSignalMapPath: "/assets/data/public_signal_map.json",
-
     // Mobile fallback rule (Plan B)
     mobileMaxWidth: 768,
 
-    // Auto-rotate + hover (locked)
+    // Auto-rotate + hover
     autoRotateSpeed: 0.35,
-
-    // Transport rolling window (locked concept; defaults to 6)
-    transportRollingMonths: 6,
 
     // Globe library CDN (no installs)
     globeCdn: "https://cdn.jsdelivr.net/npm/globe.gl@2.45.0/dist/globe.gl.min.js",
 
-    // Countries borders (CDN; minimal actions)
-    // If this ever fails, we’ll switch to local /assets/data/countries.geojson
+    // Countries borders (CDN)
     countriesGeoJsonUrl:
       "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json",
 
-    // Render hardening: ensure the hero has height
+    // Render hardening
     heroMinHeight: "70vh",
     heroMinHeightPx: 420,
 
@@ -141,15 +133,13 @@
   async function fetchAssets() {
     return fetchJson(absFeedUrl(CFG.feeds.assets));
   }
-async function fetchSignalsHqPublic() {
-  return fetchJson(absFeedUrl(CFG.feeds.signalsHqPublic));
-}
-  async function fetchManifest() {
-    return fetchJson(absFeedUrl(CFG.feeds.manifest));
+
+  async function fetchSignalsHqPublic() {
+    return fetchJson(absFeedUrl(CFG.feeds.signalsHqPublic));
   }
 
-  async function fetchSignalMapFallback() {
-    return fetchJson(CFG.fallbackSignalMapPath);
+  async function fetchManifest() {
+    return fetchJson(absFeedUrl(CFG.feeds.manifest));
   }
 
   async function fetchCountries() {
@@ -172,39 +162,7 @@ async function fetchSignalsHqPublic() {
     return typeof v === "number" ? v : null;
   }
 
-  // ---------- Old (fallback) signal-map shape support ----------
-  function normalizeSignalMap(data) {
-    let points = data?.points || data?.locations || data?.nodes || data?.hubs || [];
-    let arcs = data?.arcs || data?.routes || data?.links || data?.flows || [];
-    if (Array.isArray(data)) points = data;
-    return {
-      points: Array.isArray(points) ? points : [],
-      arcs: Array.isArray(arcs) ? arcs : []
-    };
-  }
-
-  function pickDivisionKey(obj) {
-    const raw = (obj?.division || obj?.node || obj?.type || obj?.category || "").toString().toLowerCase();
-    if (raw.includes("hq")) return "hq";
-    if (raw.includes("logistics")) return "logistics";
-    if (raw.includes("transport")) return "transport";
-    if (raw.includes("stone") || raw.includes("ember")) return "ember";
-    if (raw.includes("properties")) return "properties";
-    return "neutral";
-  }
-
-  function regionOnly(obj) {
-    const lvl = (obj?.level || obj?.scope || obj?.tier || "").toString().toLowerCase().trim();
-    if (!lvl) return true;
-    return lvl.includes("region");
-  }
-
-  function arcStartLat(a) { return a?.startLat ?? a?.fromLat ?? a?.srcLat ?? null; }
-  function arcStartLng(a) { return a?.startLng ?? a?.fromLng ?? a?.fromLon ?? a?.srcLng ?? a?.srcLon ?? null; }
-  function arcEndLat(a)   { return a?.endLat   ?? a?.toLat   ?? a?.dstLat ?? null; }
-  function arcEndLng(a)   { return a?.endLng   ?? a?.toLng   ?? a?.toLon  ?? a?.dstLng ?? a?.dstLon ?? null; }
-
-  // ---------- Feed → points builder (Step 1 target) ----------
+  // ---------- Feed → points builder ----------
   function categoryToPaletteKey(categoryRaw) {
     const c = (categoryRaw || "").toString().toLowerCase();
     if (c.includes("hq")) return "hq";
@@ -215,125 +173,166 @@ async function fetchSignalsHqPublic() {
     return "neutral";
   }
 
-function statusToColor(statusRaw) {
-  const s = (statusRaw || "").toString().toLowerCase();
-  if (s.includes("in transit")) return CFG.palette.transport;
-  if (s.includes("completed")) return CFG.palette.neutral;
-  if (s.includes("owned")) return CFG.palette.properties;
-  return CFG.palette.hq;
-}
+  function buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope) {
+    const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
+    const assets = normalizeArrayEnvelope(assetsEnvelope, "assets");
 
-function buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope) {
-  const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
-  const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
+    const regionIndex = new Map();
+    regions.forEach((r) => {
+      const lat = toLat(r);
+      const lng = toLng(r);
+      const id = (r?.region_id ?? r?.regionId ?? "").toString();
+      if (!id || lat == null || lng == null) return;
+      const active = (typeof r?.active === "boolean") ? r.active : true;
+      if (!active) return;
 
-  const regionIndex = new Map();
-  regions.forEach((r) => {
-    const id = (r?.region_id ?? r?.regionId ?? "").toString();
-    const lat = toLat(r);
-    const lng = toLng(r);
-    const active = (typeof r?.active === "boolean") ? r.active : true;
-    if (!id || lat == null || lng == null || !active) return;
-    regionIndex.set(id, { label: r?.label || id, lat, lng });
-  });
-
-  const arcs = [];
-  signals.forEach((s) => {
-    const active = (typeof s?.active === "boolean") ? s.active : true;
-    if (!active) return;
-    if (typeof s?.share_public === "boolean" && s.share_public === false) return;
-
-    const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
-    const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
-    const from = regionIndex.get(fromId);
-    const to = regionIndex.get(toId);
-    if (!from || !to) return;
-
-    const status = (s?.status || "").toString().trim();
-    const color = statusToColor(status);
-    const labelCore = s?.label_public || "Route";
-    const label = `${labelCore} — ${from.label} → ${to.label}${status ? ` (${status})` : ""}`;
-
-    arcs.push({
-      ...s,
-      _startLat: from.lat,
-      _startLng: from.lng,
-      _endLat: to.lat,
-      _endLng: to.lng,
-      _color: color,
-      _alt: 0.25,
-      _stroke: 0.9,
-      _label: label
+      regionIndex.set(id, {
+        region_id: id,
+        label: r?.label || id,
+        lat,
+        lng
+      });
     });
-  });
 
-  return arcs;
-}
+    const points = [];
+    assets.forEach((a) => {
+      const active = (typeof a?.active === "boolean") ? a.active : true;
+      if (!active) return;
 
-function buildSignalEndpointDots(regionsEnvelope, signalsEnvelope) {
-  const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
-  const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
-
-  const regionIndex = new Map();
-  regions.forEach((r) => {
-    const id = (r?.region_id ?? r?.regionId ?? "").toString();
-    const lat = toLat(r);
-    const lng = toLng(r);
-    const active = (typeof r?.active === "boolean") ? r.active : true;
-    if (!id || lat == null || lng == null || !active) return;
-    regionIndex.set(id, { label: r?.label || id, lat, lng });
-  });
-
-  const seen = new Set();
-  const dots = [];
-
-  signals.forEach((s) => {
-    const active = (typeof s?.active === "boolean") ? s.active : true;
-    if (!active) return;
-    if (typeof s?.share_public === "boolean" && s.share_public === false) return;
-
-    const status = (s?.status || "").toString().trim();
-    const color = statusToColor(status);
-
-    const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
-    const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
-
-    const addDot = (id, kind) => {
-      const reg = regionIndex.get(id);
+      const regionId = (a?.region_id ?? a?.regionId ?? "").toString();
+      const reg = regionIndex.get(regionId);
       if (!reg) return;
-      const key = `${id}:${kind}`;
-      if (seen.has(key)) return;
-      seen.add(key);
+
+      const paletteKey = categoryToPaletteKey(a?.category);
+      const color = CFG.palette[paletteKey] || CFG.palette.neutral;
+
+      const label =
+        a?.label ||
+        a?.label_public ||
+        a?.name ||
+        a?.asset_id ||
+        a?.assetId ||
+        "Asset";
+
+      const status = (a?.status || "").toString().trim();
+      const fullLabel = `${label}${status ? ` — ${status}` : ""} (${reg.label})`;
+
+      const isHq = paletteKey === "hq";
+      points.push({
+        ...a,
+        _lat: reg.lat,
+        _lng: reg.lng,
+        _color: color,
+        _label: fullLabel,
+        _radius: isHq ? 0.55 : 0.35,
+        _alt: isHq ? 0.05 : 0.03
+      });
+    });
+
+    return points;
+  }
+
+  function statusToColor(statusRaw) {
+    const s = (statusRaw || "").toString().toLowerCase();
+    if (s.includes("in transit")) return CFG.palette.transport;   // teal
+    if (s.includes("completed")) return CFG.palette.neutral;
+    if (s.includes("owned")) return CFG.palette.properties;
+    return CFG.palette.hq;
+  }
+
+  function buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope) {
+    const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
+    const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
+
+    const regionIndex = new Map();
+    regions.forEach((r) => {
+      const id = (r?.region_id ?? r?.regionId ?? "").toString();
+      const lat = toLat(r);
+      const lng = toLng(r);
+      const active = (typeof r?.active === "boolean") ? r.active : true;
+      if (!id || lat == null || lng == null || !active) return;
+      regionIndex.set(id, { label: r?.label || id, lat, lng });
+    });
+
+    const arcs = [];
+    signals.forEach((s) => {
+      const active = (typeof s?.active === "boolean") ? s.active : true;
+      if (!active) return;
+      if (typeof s?.share_public === "boolean" && s.share_public === false) return;
+
+      const fromId = (s?.from_region_id ?? s?.fromRegionId ?? "").toString();
+      const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
+      const from = regionIndex.get(fromId);
+      const to = regionIndex.get(toId);
+      if (!from || !to) return;
+
+      const status = (s?.status || "").toString().trim();
+      const color = statusToColor(status);
+
+      const labelCore = s?.label_public || "Route";
+      const label = `${labelCore} — ${from.label} → ${to.label}${status ? ` (${status})` : ""}`;
+
+      arcs.push({
+        ...s,
+        _startLat: from.lat,
+        _startLng: from.lng,
+        _endLat: to.lat,
+        _endLng: to.lng,
+        _color: color,
+        _alt: 0.25,
+        _stroke: 0.9,
+        _label: label
+      });
+    });
+
+    return arcs;
+  }
+
+  // Option A: add a visible destination dot for each public signal (we only add "to" dots so Phoenix doesn’t double-stack)
+  function buildSignalDestinationDots(regionsEnvelope, signalsEnvelope) {
+    const regions = normalizeArrayEnvelope(regionsEnvelope, "regions");
+    const signals = normalizeArrayEnvelope(signalsEnvelope, "signals");
+
+    const regionIndex = new Map();
+    regions.forEach((r) => {
+      const id = (r?.region_id ?? r?.regionId ?? "").toString();
+      const lat = toLat(r);
+      const lng = toLng(r);
+      const active = (typeof r?.active === "boolean") ? r.active : true;
+      if (!id || lat == null || lng == null || !active) return;
+      regionIndex.set(id, { label: r?.label || id, lat, lng });
+    });
+
+    const seen = new Set();
+    const dots = [];
+
+    signals.forEach((s) => {
+      const active = (typeof s?.active === "boolean") ? s.active : true;
+      if (!active) return;
+      if (typeof s?.share_public === "boolean" && s.share_public === false) return;
+
+      const toId = (s?.to_region_id ?? s?.toRegionId ?? "").toString();
+      if (!toId || seen.has(toId)) return;
+
+      const reg = regionIndex.get(toId);
+      if (!reg) return;
+
+      seen.add(toId);
+
+      const status = (s?.status || "").toString().trim();
+      const color = statusToColor(status);
 
       dots.push({
         _lat: reg.lat,
         _lng: reg.lng,
         _color: color,
-        _radius: kind === "to" ? 0.25 : 0.22,
+        _radius: 0.25,
         _alt: 0.02,
         _label: `${reg.label}${status ? ` (${status})` : ""}`
       });
-    };
-
-    addDot(fromId, "from");
-    addDot(toId, "to");
-  });
-
-  return dots;
-}
-
-  function disableUserDrag(mount) {
-    const canvas = mount.querySelector("canvas");
-    if (!canvas) return;
-
-    const block = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
-    ["pointerdown", "mousedown", "touchstart", "wheel"].forEach((evt) => {
-      canvas.addEventListener(evt, block, { passive: false });
     });
+
+    return dots;
   }
 
   // =========================
@@ -403,6 +402,7 @@ function buildSignalEndpointDots(regionsEnvelope, signalsEnvelope) {
       return;
     }
 
+    // Controls
     try {
       const controls = globe.controls();
       if (controls) {
@@ -410,10 +410,11 @@ function buildSignalEndpointDots(regionsEnvelope, signalsEnvelope) {
         controls.autoRotateSpeed = CFG.autoRotateSpeed;
         controls.enablePan = false;
         controls.enableZoom = false;
-        controls.enableRotate = true;
+        controls.enableRotate = true; // draggable
       }
     } catch (_) {}
 
+    // Size + initial view
     const resize = () => {
       ensureHeroHeight();
       const r = mount.getBoundingClientRect();
@@ -424,10 +425,11 @@ function buildSignalEndpointDots(regionsEnvelope, signalsEnvelope) {
     };
     window.addEventListener("resize", resize);
     resize();
-    // Start view focused on North America / US
-globe.pointOfView({ lat: 33.4484, lng: -112.0740, altitude: 1.9 }, 0);
 
-    // Load countries borders (non-fatal)
+    // Start view focused near Phoenix / USA
+    globe.pointOfView({ lat: 33.4484, lng: -112.0740, altitude: 1.9 }, 0);
+
+    // Countries borders (non-fatal)
     try {
       const world = await fetchCountries();
       const features = Array.isArray(world?.features) ? world.features : [];
@@ -442,42 +444,41 @@ globe.pointOfView({ lat: 33.4484, lng: -112.0740, altitude: 1.9 }, 0);
       console.log("[ECLIPSE] Feeds manifest:", man);
     } catch (_) {}
 
-// === BEGIN LIVE FEEDS (regions/assets/signals) ===
-let pointsData = [];
-let arcsData = [];
+    // === LIVE FEEDS (no local fallback) ===
+    let pointsData = [];
+    let arcsData = [];
 
-try {
-  const [regionsEnvelope, assetsEnvelope] = await Promise.all([
-    fetchRegions(),
-    fetchAssets()
-  ]);
+    try {
+      const [regionsEnvelope, assetsEnvelope] = await Promise.all([
+        fetchRegions(),
+        fetchAssets()
+      ]);
 
-  pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
+      pointsData = buildAssetPointsFromFeeds(regionsEnvelope, assetsEnvelope);
 
-try {
-  const signalsEnvelope = await fetchSignalsHqPublic();
-  arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
+      try {
+        const signalsEnvelope = await fetchSignalsHqPublic();
+        arcsData = buildArcsFromPublicSignals(regionsEnvelope, signalsEnvelope);
 
-  // Add endpoint dots for public signals (so arcs have visible destination points)
-  const endpointDots = buildSignalEndpointDots(regionsEnvelope, signalsEnvelope);
-  pointsData = pointsData.concat(endpointDots);
-} catch (err) {
-  console.warn("[ECLIPSE] LIVE signals failed; arcs+endpoint dots disabled.", err);
-  arcsData = [];
-}
+        // Add destination dots so arcs have visible endpoints
+        const destDots = buildSignalDestinationDots(regionsEnvelope, signalsEnvelope);
+        pointsData = pointsData.concat(destDots);
+      } catch (err) {
+        console.warn("[ECLIPSE] LIVE signals failed; arcs+destination dots disabled.", err);
+        arcsData = [];
+      }
 
-  console.log("[ECLIPSE] DATA MODE: LIVE", {
-    points: pointsData.length,
-    arcs: arcsData.length,
-    sampleArcColor: arcsData[0]?._color,
-    sampleArcLabel: arcsData[0]?._label
-  });
-} catch (err) {
-  console.error("[ECLIPSE] LIVE feeds failed. No fallback used.", err);
-  pointsData = [];
-  arcsData = [];
-}
-// === END LIVE FEEDS ===
+      console.log("[ECLIPSE] DATA MODE: LIVE", {
+        points: pointsData.length,
+        arcs: arcsData.length,
+        sampleArcColor: arcsData[0]?._color,
+        sampleArcLabel: arcsData[0]?._label
+      });
+    } catch (err) {
+      console.error("[ECLIPSE] LIVE feeds failed. No fallback used.", err);
+      pointsData = [];
+      arcsData = [];
+    }
 
     globe.pointsData(pointsData);
     globe.arcsData(arcsData);

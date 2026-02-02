@@ -102,6 +102,7 @@
   // ---------------------------
   function getDivisionsElements() {
     const toggle =
+      qs('[data-eg-dropdown-toggle]') ||
       qs('[data-dropdown-toggle="divisions"]') ||
       qs('#divisionsToggle') ||
       qs('#divisions-toggle') ||
@@ -109,29 +110,37 @@
       qs('[aria-controls="divisionsMenu"]');
 
     const menu =
+      qs('[data-eg-dropdown-menu]') ||
       qs('[data-dropdown-menu="divisions"]') ||
       qs('#divisionsMenu') ||
       qs('#divisions-menu') ||
       qs('.divisions-menu');
 
-    return { toggle, menu };
+    const container =
+      (toggle && toggle.closest('[data-eg-dropdown]')) ||
+      (menu && menu.closest('[data-eg-dropdown]')) ||
+      qs('[data-eg-dropdown]') ||
+      qs('.eg-nav-dropdown');
+
+    return { toggle, menu, container };
   }
 
   function initDivisionsDropdown() {
-    const { toggle, menu } = getDivisionsElements();
-    if (!toggle || !menu) return;
+    const { toggle, menu, container } = getDivisionsElements();
+    if (!toggle || !menu || !container) return;
     if (!menu.id) menu.id = 'divisionsMenu';
 
-    const open = () => { menu.classList.add(CONFIG.classes.dropdownOpen); setAriaExpanded(toggle, true); };
-    const close = () => { menu.classList.remove(CONFIG.classes.dropdownOpen); setAriaExpanded(toggle, false); };
-    const isOpen = () => menu.classList.contains(CONFIG.classes.dropdownOpen);
+    const openClass = 'eg-dropdown--open';
+    const open = () => { container.classList.add(openClass); setAriaExpanded(toggle, true); };
+    const close = () => { container.classList.remove(openClass); setAriaExpanded(toggle, false); };
+    const isOpen = () => container.classList.contains(openClass);
 
     safeAddEvent(toggle, 'click', (e) => { e.preventDefault(); e.stopPropagation(); isOpen() ? close() : open(); });
 
     safeAddEvent(document, 'click', (e) => {
       if (!isOpen()) return;
       const t = e.target;
-      if (menu.contains(t) || toggle.contains(t)) return;
+      if (container.contains(t) || toggle.contains(t)) return;
       close();
     });
 
@@ -144,7 +153,7 @@
 
     const addOpenClasses = (el) => {
       if (!el) return;
-      el.classList.add('open', 'is-open', 'show', 'active');
+      el.classList.add('open', 'is-open', 'show', 'active', 'eg-dropdown--open');
       // Some dropdowns hide via inline styles; force visible if needed
       if (el.style && el.style.display === 'none') el.style.display = '';
     };

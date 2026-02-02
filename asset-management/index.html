@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eclipse Asset Management</title>
+
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <script src="/assets/js/main.js" defer></script>
+
+  <style>
+    .eg-nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      text-decoration: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .eg-nav-cta:hover { filter: brightness(1.06); }
+  </style>
+</head>
+
+<body class="eg-body">
+  <!-- =========================
+       HEADER / NAV
+  ========================== -->
+  <header class="eg-header">
+    <div class="eg-container eg-header-inner">
+      <div class="eg-logo">
+        <div class="eg-logo-mark">EG</div>
+        <div class="eg-logo-copy">
+          <span class="eg-logo-text">ECLIPSE GLOBAL HQ</span>
+          <span class="eg-tagline">BRAIN • SIGNAL • INFRASTRUCTURE</span>
+        </div>
+      </div>
+
+      <nav class="eg-nav" data-eg-nav>
+        <a href="/#home" class="eg-nav-link">Home</a>
+        <a href="/#about" class="eg-nav-link">About HQ</a>
+        <a href="/#signal-map" class="eg-nav-link">Signal Map</a>
+        <a href="/#what-hq-does" class="eg-nav-link">What HQ Does</a>
+
+        <div class="eg-nav-dropdown" data-eg-dropdown>
+          <button
+            class="eg-nav-link eg-nav-dropdown-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-eg-dropdown-toggle
+          >
+            Eclipse Divisions <span class="eg-nav-caret" aria-hidden="true">▼</span>
+          </button>
+
+          <div class="eg-dropdown-menu" role="menu" data-eg-dropdown-menu>
+            <a class="eg-dropdown-link" role="menuitem" href="https://eclipsegloballogistics.com" target="_blank" rel="noopener">
+              Eclipse Global Logistics
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="https://eclipsetransportco.com" target="_blank" rel="noopener">
+              Eclipse Transport Co.
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="/asset-management">
+              Eclipse Asset Management
+            </a>
+            <a class="eg-dropdown-link" role="menuitem" href="https://stoneandemberco.com" target="_blank" rel="noopener">
+              Stone &amp; Ember
+            </a>
+          </div>
+        </div>
+
+        <a href="/#contact" class="eg-nav-link">Contact</a>
+
+        <a class="eg-nav-cta" href="https://portal.eclipseglobalhq.com" title="Employee Login (Portal)">
+          Employee Login
+        </a>
+
+        <button class="eg-nav-link eg-nav-pill" type="button" aria-label="Change language">
+          EN
+        </button>
+      </nav>
+
+      <button
+        class="eg-nav-toggle"
+        type="button"
+        aria-label="Toggle navigation"
+        aria-expanded="false"
+        data-eg-nav-toggle
+      >
+        <span class="eg-nav-toggle-line"></span>
+        <span class="eg-nav-toggle-line"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================
+       MAIN
+  ========================== -->
+  <main class="eg-shell">
+    <div class="eg-container">
+      <section class="eg-section" id="asset-management">
+        <header class="eg-section-header">
+          <h1 class="eg-section-title">Eclipse Asset Management</h1>
+          <p class="eg-section-subtitle">
+            A growing network of locations and assets supporting reliability and reach.
+          </p>
+        </header>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

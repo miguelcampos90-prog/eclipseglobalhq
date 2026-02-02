@@ -28,8 +28,8 @@
     liveDivisionLinks: [
       'https://eclipsegloballogistics.com',
       'https://eclipsetransportco.com',
-      'https://stoneandemberco.com',
-      'https://eclipsepropertiesmanagement.com'
+      '/asset-management',
+      'https://stoneandemberco.com'
     ]
   };
 

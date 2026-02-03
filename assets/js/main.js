@@ -264,19 +264,29 @@
   // ---------------------------
   const I18N = {
     en: {
-      asst_prompt: 'Where should I take you?',
+      asst_prompt: 'Welcome to HQ Guide. I can take you to the Signal Map, Divisions, or Contact, and help you find the right division.',
+      asst_about: 'HQ is the presentation and command node for Eclipse Global. We build structure, signal, and infrastructure—then help operating companies strengthen structure and scale with clarity.',
+      asst_division_prompt: 'Choose a division to visit.',
       btn_signal: 'Signal Map',
       btn_contact: 'Contact',
       btn_div: 'Divisions',
+      btn_about: 'About HQ',
+      btn_find_div: 'Find a Division',
+      btn_back: 'Back',
       close: 'Close',
       send: 'Send',
       div_fallback: 'Click “Eclipse Divisions” in the top navigation.'
     },
     es: {
-      asst_prompt: '¿A dónde quieres ir?',
-      btn_signal: 'Mapa',
+      asst_prompt: 'Bienvenido a HQ Guide. Puedo llevarte al Mapa de Señal, a Divisiones o a Contacto, y ayudarte a encontrar la división adecuada.',
+      asst_about: 'HQ es el nodo de presentación y comando de Eclipse Global. Construimos estructura, señal e infraestructura, y ayudamos a las empresas operativas a fortalecer su estructura y escalar con claridad.',
+      asst_division_prompt: 'Elige una división para visitar.',
+      btn_signal: 'Mapa de Señal',
       btn_contact: 'Contacto',
       btn_div: 'Divisiones',
+      btn_about: 'Sobre HQ',
+      btn_find_div: 'Encontrar una división',
+      btn_back: 'Volver',
       close: 'Cerrar',
       send: 'Enviar',
       div_fallback: 'Haz clic en “Divisiones Eclipse” en la navegación superior.'
@@ -483,6 +493,29 @@
     return true;
   }
 
+  function scrollToDivisions() {
+    const isSpanishRoute = window.location.pathname.startsWith('/es');
+    const isHome =
+      window.location.pathname === '/' ||
+      window.location.pathname === '/es' ||
+      window.location.pathname === '/es/';
+
+    if (!isHome) {
+      const target = isSpanishRoute ? '/es/#divisions' : '/#divisions';
+      window.location.href = target;
+      return false;
+    }
+
+    const el = qs('#divisions');
+    if (!el) {
+      const target = isSpanishRoute ? '/es/#divisions' : '/#divisions';
+      window.location.href = target;
+      return false;
+    }
+    (el.closest('section') || el).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
+
   function openContact() {
     window.location.href = CONFIG.contactMailto;
   }
@@ -523,6 +556,7 @@
       .asst-body{ padding:12px 14px; }
       .asst-msg{ font-size:13px; line-height:1.35; opacity:0.92; margin:0 0 10px; white-space:pre-wrap; }
       .asst-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+      .asst-actions.is-hidden{ display:none; }
       .asst-action{
         padding:10px 12px; border-radius:14px;
         background: rgba(255,255,255,0.06);
@@ -575,10 +609,19 @@
       <div class="asst-body">
         <p class="asst-msg" id="asstMsg">${t.asst_prompt}</p>
 
-        <div class="asst-actions">
+        <div class="asst-actions" id="asstActionsMain">
           <button class="asst-action primary" id="asstGoSignal" type="button">${t.btn_signal}</button>
-          <button class="asst-action" id="asstGoContact" type="button">${t.btn_contact}</button>
           <button class="asst-action" id="asstGoDiv" type="button">${t.btn_div}</button>
+          <button class="asst-action" id="asstGoContact" type="button">${t.btn_contact}</button>
+          <button class="asst-action" id="asstAboutHQ" type="button">${t.btn_about}</button>
+          <button class="asst-action" id="asstFindDiv" type="button">${t.btn_find_div}</button>
+        </div>
+        <div class="asst-actions is-hidden" id="asstActionsDivisions">
+          <button class="asst-action" data-division-link="${CONFIG.liveDivisionLinks[0]}" type="button">Logistics</button>
+          <button class="asst-action" data-division-link="${CONFIG.liveDivisionLinks[1]}" type="button">Transport</button>
+          <button class="asst-action" data-division-link="${CONFIG.liveDivisionLinks[2]}" type="button">Eclipse Asset Management</button>
+          <button class="asst-action" data-division-link="${CONFIG.liveDivisionLinks[3]}" type="button">Stone &amp; Ember</button>
+          <button class="asst-action" id="asstBackMain" type="button">${t.btn_back}</button>
         </div>
       </div>
       <div class="asst-foot">
@@ -587,9 +630,52 @@
     `;
     document.body.appendChild(panel);
 
-    const open = () => panel.classList.add('is-open');
+    const goSignal = qs('#asstGoSignal');
+    const goContact = qs('#asstGoContact');
+    const goDiv = qs('#asstGoDiv');
+    const aboutHQ = qs('#asstAboutHQ');
+    const findDiv = qs('#asstFindDiv');
+    const backMain = qs('#asstBackMain');
+    const closeBtn = qs('#asstClose');
+    const msg = qs('#asstMsg');
+    const actionsMain = qs('#asstActionsMain');
+    const actionsDivisions = qs('#asstActionsDivisions');
+
+    let currentView = 'main';
+
+    const showWelcome = () => {
+      const lng = Language.get();
+      const tt = I18N[lng] || I18N.en;
+      if (msg) msg.textContent = tt.asst_prompt;
+      actionsMain?.classList.remove('is-hidden');
+      actionsDivisions?.classList.add('is-hidden');
+      currentView = 'main';
+    };
+
+    const showAboutHQ = () => {
+      const lng = Language.get();
+      const tt = I18N[lng] || I18N.en;
+      if (msg) msg.textContent = tt.asst_about;
+      actionsMain?.classList.remove('is-hidden');
+      actionsDivisions?.classList.add('is-hidden');
+      currentView = 'about';
+    };
+
+    const showDivisionChooser = () => {
+      const lng = Language.get();
+      const tt = I18N[lng] || I18N.en;
+      if (msg) msg.textContent = tt.asst_division_prompt;
+      actionsMain?.classList.add('is-hidden');
+      actionsDivisions?.classList.remove('is-hidden');
+      currentView = 'divisions';
+    };
+
+    const open = () => {
+      showWelcome();
+      panel.classList.add('is-open');
+    };
     const close = () => panel.classList.remove('is-open');
-    const toggle = () => panel.classList.toggle('is-open');
+    const toggle = () => (panel.classList.contains('is-open') ? close() : open());
 
     // Expose for auto-open
     window.ECLIPSE_HQ = window.ECLIPSE_HQ || {};
@@ -603,28 +689,17 @@
       close();
     });
 
-    const goSignal = qs('#asstGoSignal');
-    const goContact = qs('#asstGoContact');
-    const goDiv = qs('#asstGoDiv');
-    const closeBtn = qs('#asstClose');
-    const msg = qs('#asstMsg');
-
     safeAddEvent(goSignal, 'click', () => { close(); scrollToSignalMap(); });
+    safeAddEvent(goDiv, 'click', () => { close(); scrollToDivisions(); });
     safeAddEvent(goContact, 'click', () => { close(); openContact(); });
-
-    safeAddEvent(goDiv, 'click', () => {
-      close();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => {
-        const ok = openDivisionsMenuRobust();
-        if (!ok && msg) {
-          // Hover-only fallback: instruct, no guessing.
-          const lng = Language.get();
-          msg.textContent = (I18N[lng] || I18N.en).div_fallback;
-          // reopen panel so they see the instruction
-          open();
-        }
-      }, 260);
+    safeAddEvent(aboutHQ, 'click', () => { showAboutHQ(); });
+    safeAddEvent(findDiv, 'click', () => { showDivisionChooser(); });
+    safeAddEvent(backMain, 'click', () => { showWelcome(); });
+    safeAddEvent(actionsDivisions, 'click', (e) => {
+      const btn = e.target.closest('[data-division-link]');
+      if (!btn) return;
+      const link = btn.getAttribute('data-division-link');
+      if (link) window.location.href = link;
     });
 
     safeAddEvent(closeBtn, 'click', () => close());
@@ -632,10 +707,15 @@
     safeAddEvent(document, 'eclipse:languagechange', () => {
       const lng = Language.get();
       const tt = I18N[lng] || I18N.en;
-      if (msg) msg.textContent = tt.asst_prompt;
+      if (currentView === 'divisions') showDivisionChooser();
+      else if (currentView === 'about') showAboutHQ();
+      else showWelcome();
       if (goSignal) goSignal.textContent = tt.btn_signal;
       if (goContact) goContact.textContent = tt.btn_contact;
       if (goDiv) goDiv.textContent = tt.btn_div;
+      if (aboutHQ) aboutHQ.textContent = tt.btn_about;
+      if (findDiv) findDiv.textContent = tt.btn_find_div;
+      if (backMain) backMain.textContent = tt.btn_back;
       if (closeBtn) closeBtn.textContent = tt.close;
     });
   }

@@ -266,7 +266,7 @@
   }
 
   // ---------------------------
-  // 5) Language state — LEFT pill control (EN/ES state only)
+  // 5) Language state — based on document language
   // ---------------------------
   const I18N = {
     en: {
@@ -291,6 +291,9 @@
 
   const Language = {
     get() {
+      const htmlLang = (document.documentElement.getAttribute('lang') || '').toLowerCase();
+      if (htmlLang.startsWith('es')) return 'es';
+      if (htmlLang.startsWith('en')) return 'en';
       const v = getLS(CONFIG.storage.language, 'en');
       return (v === 'es' || v === 'en') ? v : 'en';
     },
@@ -318,6 +321,28 @@
     const chip = getLangChip();
     if (!chip) return;
     chip.textContent = (lang || 'en').toUpperCase();
+  }
+
+  function initLanguageDropdown() {
+    const container = qs('[data-eg-lang-dropdown]');
+    const toggle = qs('[data-eg-lang-toggle]');
+    const menu = qs('[data-eg-lang-menu]');
+    if (!container || !toggle || !menu) return;
+
+    const openClass = 'eg-dropdown--open';
+    const open = () => { container.classList.add(openClass); setAriaExpanded(toggle, true); };
+    const close = () => { container.classList.remove(openClass); setAriaExpanded(toggle, false); };
+    const isOpen = () => container.classList.contains(openClass);
+
+    safeAddEvent(toggle, 'click', (e) => { e.preventDefault(); e.stopPropagation(); isOpen() ? close() : open(); });
+    safeAddEvent(document, 'click', (e) => {
+      if (!isOpen()) return;
+      const t = e.target;
+      if (container.contains(t) || toggle.contains(t)) return;
+      close();
+    });
+    safeAddEvent(document, 'keydown', (e) => { if (isOpen() && e.key === 'Escape') close(); });
+    qsa('a', menu).forEach((a) => safeAddEvent(a, 'click', () => close()));
   }
 
   // This creates a transparent proxy exactly over the left pill, so it's clickable even if the header overlay blocks clicks.
@@ -642,11 +667,9 @@
     document.documentElement.setAttribute('lang', lang);
     updateLangChipText(lang);
 
-    // LEFT pill language control (proxy makes it clickable even if overlays exist)
-    injectLangProxyAndMenu();
-
     initGlobeAutoload();
     initDivisionsDropdown();
+    initLanguageDropdown();
     initMobileNav();
     initFooterYear();
 

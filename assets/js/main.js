@@ -20,7 +20,7 @@
     },
     classes: {
       dropdownOpen: 'is-open',
-      mobileNavOpen: 'is-open',
+      mobileNavOpen: 'eg-nav--open',
       bodyNavOpen: 'nav-open',
       themeLight: 'theme-light',
       themeDark: 'theme-dark',
@@ -214,35 +214,29 @@
   // 3) Mobile nav toggle
   // ---------------------------
   function initMobileNav() {
-    const toggle =
-      qs('[data-mobile-nav-toggle]') ||
-      qs('#mobileNavToggle') ||
-      qs('#navToggle') ||
-      qs('.nav-toggle') ||
-      qs('.hamburger');
-
-    const nav =
-      qs('[data-mobile-nav]') ||
-      qs('#mobileNav') ||
-      qs('#navMenu') ||
-      qs('.mobile-nav') ||
-      qs('.nav-links');
+    const toggle = qs('[data-eg-nav-toggle]');
+    const nav = qs('[data-eg-nav]');
 
     if (!toggle || !nav) return;
 
+    const isMobile = () => window.matchMedia('(max-width: 840px)').matches;
     const open = () => {
+      if (!isMobile()) return;
       nav.classList.add(CONFIG.classes.mobileNavOpen);
-      document.body.classList.add(CONFIG.classes.bodyNavOpen);
       setAriaExpanded(toggle, true);
     };
     const close = () => {
       nav.classList.remove(CONFIG.classes.mobileNavOpen);
-      document.body.classList.remove(CONFIG.classes.bodyNavOpen);
       setAriaExpanded(toggle, false);
     };
     const isOpen = () => nav.classList.contains(CONFIG.classes.mobileNavOpen);
 
-    safeAddEvent(toggle, 'click', (e) => { e.preventDefault(); e.stopPropagation(); isOpen() ? close() : open(); });
+    safeAddEvent(toggle, 'click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isOpen()) close();
+      else open();
+    });
 
     safeAddEvent(document, 'click', (e) => {
       if (!isOpen()) return;

@@ -458,12 +458,23 @@
   // Shared navigation actions
   // ---------------------------
   function scrollToSignalMap() {
+    const isSpanishRoute = window.location.pathname.startsWith('/es');
+    const isHome =
+      window.location.pathname === '/' ||
+      window.location.pathname === '/es' ||
+      window.location.pathname === '/es/';
+
+    if (!isHome) {
+      const target = isSpanishRoute ? '/es/#signal-map' : '/#signal-map';
+      window.location.href = target;
+      return false;
+    }
+
     const el =
       qs('#signal-map') ||
       qs('[data-signal-map]');
 
     if (!el) {
-      const isSpanishRoute = window.location.pathname.startsWith('/es/');
       const target = isSpanishRoute ? '/es/#signal-map' : '/#signal-map';
       window.location.href = target;
       return false;

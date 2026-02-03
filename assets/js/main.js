@@ -279,7 +279,7 @@
       btn_div: 'Divisiones',
       close: 'Cerrar',
       send: 'Enviar',
-      div_fallback: 'Haz clic en “Eclipse Divisions” en la navegación superior.'
+      div_fallback: 'Haz clic en “Divisiones Eclipse” en la navegación superior.'
     }
   };
 
@@ -465,7 +465,9 @@
       qs('#globeViz');
 
     if (!el) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const isSpanishRoute = window.location.pathname.startsWith('/es/');
+      const target = isSpanishRoute ? '/es/#signal-map' : '/#signal-map';
+      window.location.href = target;
       return false;
     }
     (el.closest('section') || el).scrollIntoView({ behavior: 'smooth', block: 'start' });

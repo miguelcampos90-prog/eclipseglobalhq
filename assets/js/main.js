@@ -264,19 +264,53 @@
   // ---------------------------
   const I18N = {
     en: {
-      asst_prompt: 'Where should I take you?',
+      asst_welcome: 'Welcome to HQ Guide.',
+      asst_help: 'How can I help?',
+      asst_ack_signal: 'Got it — opening the Signal Map.',
+      asst_ack_divisions: 'Sure — taking you to Eclipse Divisions.',
+      asst_ack_contact: 'Understood — opening Contact.',
+      asst_ack_about: 'Here is a quick overview of HQ.',
+      asst_ack_find_div: 'Let’s find the right division.',
+      asst_ack_language: 'Choose your language.',
+      asst_ack_language_set: 'Language set to English.',
+      asst_ack_open_division: 'Opening',
+      asst_about: 'HQ is the presentation and command node for Eclipse Global. We build structure, signal, and infrastructure—then help operating companies strengthen structure and scale with clarity.',
+      asst_division_prompt: 'Choose a division to visit.',
       btn_signal: 'Signal Map',
       btn_contact: 'Contact',
-      btn_div: 'Divisions',
+      btn_div: 'Eclipse Divisions',
+      btn_about: 'About HQ',
+      btn_find_div: 'Find a Division',
+      btn_language: 'Language',
+      btn_back: 'Back',
+      btn_lang_en: 'English',
+      btn_lang_es: 'Español',
       close: 'Close',
       send: 'Send',
       div_fallback: 'Click “Eclipse Divisions” in the top navigation.'
     },
     es: {
-      asst_prompt: '¿A dónde quieres ir?',
-      btn_signal: 'Mapa',
+      asst_welcome: 'Bienvenido a HQ Guide.',
+      asst_help: '¿Cómo puedo ayudarte?',
+      asst_ack_signal: 'Perfecto — abriendo el Mapa de Señal.',
+      asst_ack_divisions: 'Claro — te llevo a Divisiones Eclipse.',
+      asst_ack_contact: 'Entendido — abriendo Contacto.',
+      asst_ack_about: 'Aquí tienes un resumen de HQ.',
+      asst_ack_find_div: 'Encontremos la división correcta.',
+      asst_ack_language: 'Elige tu idioma.',
+      asst_ack_language_set: 'Idioma cambiado a Español.',
+      asst_ack_open_division: 'Abriendo',
+      asst_about: 'HQ es el nodo de presentación y comando de Eclipse Global. Construimos estructura, señal e infraestructura, y ayudamos a las empresas operativas a fortalecer su estructura y escalar con claridad.',
+      asst_division_prompt: 'Elige una división para visitar.',
+      btn_signal: 'Mapa de Señal',
       btn_contact: 'Contacto',
-      btn_div: 'Divisiones',
+      btn_div: 'Divisiones Eclipse',
+      btn_about: 'Sobre HQ',
+      btn_find_div: 'Encontrar una división',
+      btn_language: 'Idioma',
+      btn_back: 'Volver',
+      btn_lang_en: 'English',
+      btn_lang_es: 'Español',
       close: 'Cerrar',
       send: 'Enviar',
       div_fallback: 'Haz clic en “Divisiones Eclipse” en la navegación superior.'
@@ -483,6 +517,29 @@
     return true;
   }
 
+  function scrollToDivisions() {
+    const isSpanishRoute = window.location.pathname.startsWith('/es');
+    const isHome =
+      window.location.pathname === '/' ||
+      window.location.pathname === '/es' ||
+      window.location.pathname === '/es/';
+
+    if (!isHome) {
+      const target = isSpanishRoute ? '/es/#divisions' : '/#divisions';
+      window.location.href = target;
+      return false;
+    }
+
+    const el = qs('#divisions');
+    if (!el) {
+      const target = isSpanishRoute ? '/es/#divisions' : '/#divisions';
+      window.location.href = target;
+      return false;
+    }
+    (el.closest('section') || el).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
+
   function openContact() {
     window.location.href = CONFIG.contactMailto;
   }
@@ -520,8 +577,27 @@
       .asst-panel.is-open{ display:block; }
       .asst-head{ padding:14px 14px 10px; border-bottom:1px solid rgba(255,255,255,0.10); }
       .asst-title{ font-weight:800; font-size:14px; margin:0; }
-      .asst-body{ padding:12px 14px; }
-      .asst-msg{ font-size:13px; line-height:1.35; opacity:0.92; margin:0 0 10px; white-space:pre-wrap; }
+      .asst-body{ padding:12px 14px 14px; }
+      .asst-transcript{
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        max-height:230px;
+        overflow-y:auto;
+        padding:4px 2px 8px;
+      }
+      .asst-bubble{
+        align-self:flex-start;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: rgba(255,255,255,0.92);
+        padding:10px 12px;
+        border-radius:14px;
+        font-size:13px;
+        line-height:1.35;
+        white-space:pre-wrap;
+      }
+      .asst-bubble.typing{ opacity:0.7; letter-spacing:2px; }
       .asst-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
       .asst-action{
         padding:10px 12px; border-radius:14px;
@@ -573,13 +649,8 @@
         <p class="asst-title" id="asstTitle">${CONFIG.brandAssistantName}</p>
       </div>
       <div class="asst-body">
-        <p class="asst-msg" id="asstMsg">${t.asst_prompt}</p>
-
-        <div class="asst-actions">
-          <button class="asst-action primary" id="asstGoSignal" type="button">${t.btn_signal}</button>
-          <button class="asst-action" id="asstGoContact" type="button">${t.btn_contact}</button>
-          <button class="asst-action" id="asstGoDiv" type="button">${t.btn_div}</button>
-        </div>
+        <div class="asst-transcript" id="asstTranscript" aria-live="polite"></div>
+        <div class="asst-actions" id="asstReplies"></div>
       </div>
       <div class="asst-foot">
         <button class="asst-close" id="asstClose" type="button">${t.close}</button>
@@ -587,9 +658,87 @@
     `;
     document.body.appendChild(panel);
 
-    const open = () => panel.classList.add('is-open');
+    const closeBtn = qs('#asstClose');
+    const transcript = qs('#asstTranscript');
+    const replies = qs('#asstReplies');
+
+    const RESPONSE_DELAY_MS = 180;
+
+    const clearTranscript = () => {
+      if (transcript) transcript.innerHTML = '';
+    };
+
+    const appendBubble = (text, { typing = false } = {}) => {
+      if (!transcript) return null;
+      const bubble = document.createElement('div');
+      bubble.className = `asst-bubble${typing ? ' typing' : ''}`;
+      bubble.textContent = text;
+      transcript.appendChild(bubble);
+      transcript.scrollTop = transcript.scrollHeight;
+      return bubble;
+    };
+
+    const appendAssistantReply = (text) => {
+      const typingBubble = appendBubble('...', { typing: true });
+      setTimeout(() => {
+        if (!typingBubble) return;
+        typingBubble.textContent = text;
+        typingBubble.classList.remove('typing');
+        transcript.scrollTop = transcript.scrollHeight;
+      }, RESPONSE_DELAY_MS);
+    };
+
+    const setReplies = (items) => {
+      if (!replies) return;
+      replies.innerHTML = items.map(({ id, label, action }) => `
+        <button class="asst-action" type="button" data-action="${action}" data-id="${id}">${label}</button>
+      `).join('');
+    };
+
+    const mainReplies = () => {
+      const lng = Language.get();
+      const tt = I18N[lng] || I18N.en;
+      setReplies([
+        { id: 'signal', label: tt.btn_signal, action: 'signal' },
+        { id: 'divisions', label: tt.btn_div, action: 'divisions' },
+        { id: 'contact', label: tt.btn_contact, action: 'contact' },
+        { id: 'about', label: tt.btn_about, action: 'about' },
+        { id: 'find', label: tt.btn_find_div, action: 'find' },
+        { id: 'language', label: tt.btn_language, action: 'language' }
+      ]);
+    };
+
+    const divisionReplies = () => setReplies([
+      { id: 'logistics', label: 'Logistics', action: 'division' },
+      { id: 'transport', label: 'Transport', action: 'division' },
+      { id: 'asset', label: 'Eclipse Asset Management', action: 'division' },
+      { id: 'stone', label: 'Stone & Ember', action: 'division' },
+      { id: 'back', label: (I18N[Language.get()] || I18N.en).btn_back, action: 'back' }
+    ]);
+
+    const languageReplies = () => {
+      const tt = I18N[Language.get()] || I18N.en;
+      setReplies([
+        { id: 'en', label: tt.btn_lang_en, action: 'language-set' },
+        { id: 'es', label: tt.btn_lang_es, action: 'language-set' },
+        { id: 'back', label: tt.btn_back, action: 'back' }
+      ]);
+    };
+
+    const showWelcome = () => {
+      const tt = I18N[Language.get()] || I18N.en;
+      clearTranscript();
+      appendBubble(tt.asst_welcome);
+      appendBubble(tt.asst_help);
+      mainReplies();
+    };
+
+    const open = () => {
+      showWelcome();
+      panel.classList.add('is-open');
+    };
     const close = () => panel.classList.remove('is-open');
-    const toggle = () => panel.classList.toggle('is-open');
+    const toggle = () => (panel.classList.contains('is-open') ? close() : open());
 
     // Expose for auto-open
     window.ECLIPSE_HQ = window.ECLIPSE_HQ || {};
@@ -603,40 +752,78 @@
       close();
     });
 
-    const goSignal = qs('#asstGoSignal');
-    const goContact = qs('#asstGoContact');
-    const goDiv = qs('#asstGoDiv');
-    const closeBtn = qs('#asstClose');
-    const msg = qs('#asstMsg');
+    safeAddEvent(replies, 'click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-action');
+      const id = btn.getAttribute('data-id');
+      const tt = I18N[Language.get()] || I18N.en;
 
-    safeAddEvent(goSignal, 'click', () => { close(); scrollToSignalMap(); });
-    safeAddEvent(goContact, 'click', () => { close(); openContact(); });
-
-    safeAddEvent(goDiv, 'click', () => {
-      close();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => {
-        const ok = openDivisionsMenuRobust();
-        if (!ok && msg) {
-          // Hover-only fallback: instruct, no guessing.
-          const lng = Language.get();
-          msg.textContent = (I18N[lng] || I18N.en).div_fallback;
-          // reopen panel so they see the instruction
-          open();
+      if (action === 'signal') {
+        appendAssistantReply(tt.asst_ack_signal);
+        setTimeout(() => { close(); scrollToSignalMap(); }, RESPONSE_DELAY_MS + 60);
+        return;
+      }
+      if (action === 'divisions') {
+        appendAssistantReply(tt.asst_ack_divisions);
+        setTimeout(() => { close(); scrollToDivisions(); }, RESPONSE_DELAY_MS + 60);
+        return;
+      }
+      if (action === 'contact') {
+        appendAssistantReply(tt.asst_ack_contact);
+        setTimeout(() => { close(); openContact(); }, RESPONSE_DELAY_MS + 60);
+        return;
+      }
+      if (action === 'about') {
+        appendAssistantReply(tt.asst_ack_about);
+        setTimeout(() => appendBubble(tt.asst_about), RESPONSE_DELAY_MS + 60);
+        return;
+      }
+      if (action === 'find') {
+        appendAssistantReply(tt.asst_ack_find_div);
+        setTimeout(() => {
+          appendBubble(tt.asst_division_prompt);
+          divisionReplies();
+        }, RESPONSE_DELAY_MS + 60);
+        return;
+      }
+      if (action === 'language') {
+        appendAssistantReply(tt.asst_ack_language);
+        setTimeout(() => languageReplies(), RESPONSE_DELAY_MS + 60);
+        return;
+      }
+      if (action === 'back') {
+        showWelcome();
+        return;
+      }
+      if (action === 'language-set') {
+        if (id) Language.set(id);
+        const updated = I18N[Language.get()] || I18N.en;
+        appendAssistantReply(updated.asst_ack_language_set);
+        setTimeout(() => mainReplies(), RESPONSE_DELAY_MS + 60);
+        return;
+      }
+      if (action === 'division') {
+        const map = {
+          logistics: CONFIG.liveDivisionLinks[0],
+          transport: CONFIG.liveDivisionLinks[1],
+          asset: CONFIG.liveDivisionLinks[2],
+          stone: CONFIG.liveDivisionLinks[3]
+        };
+        const link = map[id];
+        if (link) {
+          appendAssistantReply(`${tt.asst_ack_open_division} ${btn.textContent}.`);
+          setTimeout(() => { window.location.href = link; }, RESPONSE_DELAY_MS + 60);
         }
-      }, 260);
+      }
     });
 
     safeAddEvent(closeBtn, 'click', () => close());
 
     safeAddEvent(document, 'eclipse:languagechange', () => {
-      const lng = Language.get();
-      const tt = I18N[lng] || I18N.en;
-      if (msg) msg.textContent = tt.asst_prompt;
-      if (goSignal) goSignal.textContent = tt.btn_signal;
-      if (goContact) goContact.textContent = tt.btn_contact;
-      if (goDiv) goDiv.textContent = tt.btn_div;
+      const tt = I18N[Language.get()] || I18N.en;
       if (closeBtn) closeBtn.textContent = tt.close;
+      mainReplies();
     });
   }
 

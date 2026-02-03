@@ -460,9 +460,7 @@
   function scrollToSignalMap() {
     const el =
       qs('#signal-map') ||
-      qs('[data-signal-map]') ||
-      qs('#globe') ||
-      qs('#globeViz');
+      qs('[data-signal-map]');
 
     if (!el) {
       const isSpanishRoute = window.location.pathname.startsWith('/es/');

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /network/
+Disallow: /dashboard.html
+Disallow: /portal.html
+
+Sitemap: https://eclipseglobalhq.com/sitemap.xml

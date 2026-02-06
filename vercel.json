@@ -1,4 +1,18 @@
 {
+  "redirects": [
+    {
+      "source": "/dashboard.html",
+      "has": [{ "type": "host", "value": "eclipseglobalhq.com" }],
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/portal.html",
+      "has": [{ "type": "host", "value": "eclipseglobalhq.com" }],
+      "destination": "/",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/",
